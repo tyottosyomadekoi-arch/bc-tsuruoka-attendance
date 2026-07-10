@@ -1,0 +1,1 @@
+# bc-tsuruoka-attendance
