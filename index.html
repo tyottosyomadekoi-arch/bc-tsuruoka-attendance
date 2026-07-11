@@ -313,7 +313,29 @@ function renderChildren(){
     loadAndApplyExisting(block);
   });
   if(document.getElementById('childrenContainer').children.length === 0){
+    loadAllChildrenForSubmitter();
+  }
+}
+ 
+async function loadAllChildrenForSubmitter(){
+  const ym = document.getElementById('monthInput').value;
+  let names = [];
+  if(lineDisplayName){
+    try{
+      const r = await apiGet('getAttendanceList', { month: ym });
+      const submissions = r.submissions || [];
+      const mine = submissions.filter(s => s.submitterLineName === lineDisplayName);
+      // unique names, most recently updated first
+      const seen = new Set();
+      mine.sort((a,b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+      mine.forEach(s => { if(s.name && !seen.has(s.name)){ seen.add(s.name); names.push(s.name); } });
+    }catch(e){ console.error(e); }
+  }
+  if(names.length === 0){
+    // first time using the app: start with one block prefilled with the LINE name
     addChild(lineDisplayName || '');
+  }else{
+    names.forEach(n => addChild(n));
   }
 }
 function renderDatesForChild(block){
