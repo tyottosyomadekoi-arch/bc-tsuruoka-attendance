@@ -14,6 +14,8 @@
     --ok: #2E8B57;
     --late: #B8860B;
     --early: #C0682B;
+    --absent: #B0413E;
+    --other: #6B5B95;
     --muted: #7C8A99;
     --text: #2A3540;
   }
@@ -56,12 +58,17 @@
     border:1.5px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--muted);background:#fff;
   }
   .chip.on[data-type="attend"]{border-color:var(--ok);background:#EAF6EE;color:var(--ok);}
+  .chip.on[data-type="absent"]{border-color:var(--absent);background:#FBE9E8;color:var(--absent);}
   .chip.on[data-type="late"]{border-color:var(--late);background:#FBF3E1;color:var(--late);}
   .chip.on[data-type="early"]{border-color:var(--early);background:#FCEDE4;color:var(--early);}
+  .chip.on[data-type="other"]{border-color:var(--other);background:#EFECF5;color:var(--other);}
   .time-inline{display:none;align-items:center;gap:6px;margin-top:6px;}
   .time-inline.show{display:flex;}
   .time-inline input{width:120px;}
   .time-inline .tlabel{font-size:12px;color:var(--muted);}
+  .other-inline{display:none;margin-top:6px;}
+  .other-inline.show{display:block;}
+  .other-inline input{width:100%;}
  
   .add-child-btn{width:100%;border:1.5px dashed var(--border);background:#fff;color:var(--navy);padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px;}
   .submit-btn{width:100%;background:var(--navy);color:#fff;border:none;padding:13px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}
@@ -73,8 +80,10 @@
   .summary-row{font-size:12.5px;display:flex;justify-content:space-between;padding:3px 0;color:var(--text);}
   .summary-row .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
   .tag.attend{background:#EAF6EE;color:var(--ok);}
+  .tag.absent{background:#FBE9E8;color:var(--absent);}
   .tag.late{background:#FBF3E1;color:var(--late);}
   .tag.early{background:#FCEDE4;color:var(--early);}
+  .tag.other{background:#EFECF5;color:var(--other);}
   .empty{text-align:center;color:var(--muted);font-size:12.5px;padding:14px 0;}
   .liff-note{font-size:11px;color:var(--muted);text-align:center;padding-top:2px;}
 </style>
@@ -243,17 +252,53 @@ function addChild(prefillName){
       </div>
       <button class="remove-child" onclick="removeChild('${id}')" style="margin-left:8px;">削除</button>
     </div>
+    <div class="loadNote" style="font-size:11.5px;color:var(--muted);margin:-4px 0 6px;"></div>
     <div class="datesList"></div>
   `;
   container.appendChild(block);
   renderDatesForChild(block);
+  block.querySelector('.childName').addEventListener('blur', () => loadAndApplyExisting(block));
+  if(prefillName) loadAndApplyExisting(block);
+}
+ 
+async function loadAndApplyExisting(block){
+  const nameEl = block.querySelector('.childName');
+  const name = nameEl ? nameEl.value.trim() : '';
+  const note = block.querySelector('.loadNote');
+  if(!name) return;
+  const ym = document.getElementById('monthInput').value;
+  try{
+    const r = await apiGet('getAttendanceList', { month: ym });
+    const submissions = r.submissions || [];
+    const existing = submissions.find(s => s.name === name);
+    if(!existing || !existing.days){
+      if(note) note.textContent = '';
+      return;
+    }
+    block.querySelectorAll('.date-row').forEach(row => {
+      const ds = row.dataset.date;
+      const d = existing.days[ds];
+      if(!d || !d.status) return;
+      const chip = row.querySelector(`.chip[data-type="${d.status}"]`);
+      if(chip && !chip.classList.contains('on')) selectChip(chip);
+      if(d.status === 'late' && d.time){ const t = row.querySelector('.lateTime'); if(t) t.value = d.time; }
+      if(d.status === 'early' && d.time){ const t = row.querySelector('.earlyTime'); if(t) t.value = d.time; }
+      if(d.status === 'other' && d.message){ const m = row.querySelector('.otherMessage'); if(m) m.value = d.message; }
+    });
+    if(note) note.textContent = '前回の回答を読み込みました。変更したい日だけ直して送信してください。';
+  }catch(e){
+    console.error(e);
+  }
 }
 function removeChild(id){
   const el = document.getElementById(id);
   if(el) el.remove();
 }
 function renderChildren(){
-  document.querySelectorAll('.child-block').forEach(block => renderDatesForChild(block));
+  document.querySelectorAll('.child-block').forEach(block => {
+    renderDatesForChild(block);
+    loadAndApplyExisting(block);
+  });
   if(document.getElementById('childrenContainer').children.length === 0){
     addChild(lineDisplayName || '');
   }
@@ -268,9 +313,11 @@ function renderDatesForChild(block){
     <div class="date-row" data-date="${ds}">
       <div class="date-label">${shortLabel(ds)}</div>
       <div class="chips">
-        <div class="chip" data-type="attend" onclick="toggleChip(this)">参加</div>
-        <div class="chip" data-type="late" onclick="toggleChip(this)">遅刻</div>
-        <div class="chip" data-type="early" onclick="toggleChip(this)">早退</div>
+        <div class="chip" data-type="attend" onclick="selectChip(this)">参加</div>
+        <div class="chip" data-type="absent" onclick="selectChip(this)">欠席</div>
+        <div class="chip" data-type="late" onclick="selectChip(this)">遅刻</div>
+        <div class="chip" data-type="early" onclick="selectChip(this)">早退</div>
+        <div class="chip" data-type="other" onclick="selectChip(this)">その他</div>
       </div>
       <div class="time-inline" data-type="late">
         <span class="tlabel">到着予定</span><input type="time" class="lateTime">
@@ -278,16 +325,30 @@ function renderDatesForChild(block){
       <div class="time-inline" data-type="early">
         <span class="tlabel">退出予定</span><input type="time" class="earlyTime">
       </div>
+      <div class="other-inline" data-type="other">
+        <input type="text" class="otherMessage" placeholder="内容を入力（例：体調不良のため30分遅れます）">
+      </div>
     </div>
   `).join('');
 }
-function toggleChip(el){
-  const on = el.classList.toggle('on');
+function selectChip(el){
+  const row = el.closest('.date-row');
   const type = el.dataset.type;
-  if(type === 'late' || type === 'early'){
-    const row = el.closest('.date-row');
-    const timeEl = row.querySelector(`.time-inline[data-type="${type}"]`);
-    timeEl.classList.toggle('show', on);
+  const wasOn = el.classList.contains('on');
+ 
+  // clear all chips in this row, then set only the clicked one (toggle off if tapped again)
+  row.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  row.querySelectorAll('.time-inline').forEach(t => t.classList.remove('show'));
+  row.querySelectorAll('.other-inline').forEach(t => t.classList.remove('show'));
+ 
+  if(!wasOn){
+    el.classList.add('on');
+    if(type === 'late' || type === 'early'){
+      row.querySelector(`.time-inline[data-type="${type}"]`).classList.add('show');
+    }
+    if(type === 'other'){
+      row.querySelector(`.other-inline[data-type="other"]`).classList.add('show');
+    }
   }
 }
  
@@ -297,33 +358,53 @@ async function submitAll(){
   const blocks = document.querySelectorAll('.child-block');
   if(blocks.length === 0){ msg.textContent = 'お子様を追加してください'; return; }
  
+  msg.textContent = '送信中…';
   let ok = true;
-  for(const block of blocks){
-    const name = block.querySelector('.childName').value.trim();
-    if(!name) continue;
-    const days = {};
-    block.querySelectorAll('.date-row').forEach(row => {
-      const ds = row.dataset.date;
-      const attend = row.querySelector('.chip[data-type="attend"]').classList.contains('on');
-      const late = row.querySelector('.chip[data-type="late"]').classList.contains('on');
-      const early = row.querySelector('.chip[data-type="early"]').classList.contains('on');
-      if(attend || late || early){
-        days[ds] = {
-          attend,
-          late, lateTime: late ? row.querySelector('.lateTime').value : null,
-          early, earlyTime: early ? row.querySelector('.earlyTime').value : null
-        };
-      }
-    });
-    try{
-      const result = await apiPost({
-        action: 'saveAttendance', month: ym, name,
-        submitterLineName: lineDisplayName || null, days
+  let errorDetail = '';
+ 
+  try{
+    for(const block of blocks){
+      const nameEl = block.querySelector('.childName');
+      const name = nameEl ? nameEl.value.trim() : '';
+      if(!name) continue;
+      const days = {};
+      block.querySelectorAll('.date-row').forEach(row => {
+        const ds = row.dataset.date;
+        const activeChip = row.querySelector('.chip.on');
+        if(!activeChip) return;
+        const status = activeChip.dataset.type; // attend | absent | late | early | other
+        const entry = { status };
+        if(status === 'late'){
+          const t = row.querySelector('.lateTime');
+          entry.time = t ? t.value : null;
+        }
+        if(status === 'early'){
+          const t = row.querySelector('.earlyTime');
+          entry.time = t ? t.value : null;
+        }
+        if(status === 'other'){
+          const m = row.querySelector('.otherMessage');
+          entry.message = m ? m.value.trim() : '';
+        }
+        days[ds] = entry;
       });
-      if(!result || !result.ok) ok = false;
-    }catch(e){ console.error(e); ok = false; }
+      try{
+        const result = await apiPost({
+          action: 'saveAttendance', month: ym, name,
+          submitterLineName: lineDisplayName || null, days
+        });
+        if(!result || !result.ok) ok = false;
+      }catch(e){ console.error(e); ok = false; errorDetail = e.message || String(e); }
+    }
+  }catch(e){
+    console.error(e);
+    ok = false;
+    errorDetail = e.message || String(e);
   }
-  msg.textContent = ok ? 'この月の出欠を送信しました。ありがとうございます！' : '一部送信に失敗しました。もう一度お試しください。';
+ 
+  msg.textContent = ok
+    ? 'この月の出欠を送信しました。ありがとうございます！'
+    : `送信に失敗しました。${errorDetail ? '(' + errorDetail + ')' : 'もう一度お試しください。'}`;
   loadSummary();
 }
  
@@ -342,14 +423,16 @@ async function loadSummary(){
       return;
     }
     let html = '';
+    const labelMap = { attend: '出席', absent: '欠席', late: '遅刻', early: '早退', other: 'その他' };
     for(const ds of practiceDates){
       const rows = [];
       for(const s of submissions){
         const d = s.days ? s.days[ds] : null;
-        if(!d) continue;
-        if(d.attend) rows.push(`<div class="summary-row"><span>${escapeHtml(s.name)}</span><span class="tag attend">出席</span></div>`);
-        if(d.late) rows.push(`<div class="summary-row"><span>${escapeHtml(s.name)}</span><span class="tag late">遅刻 ${d.lateTime||''}</span></div>`);
-        if(d.early) rows.push(`<div class="summary-row"><span>${escapeHtml(s.name)}</span><span class="tag early">早退 ${d.earlyTime||''}</span></div>`);
+        if(!d || !d.status) continue;
+        let extra = '';
+        if(d.status === 'late' || d.status === 'early') extra = d.time ? ` ${d.time}` : '';
+        if(d.status === 'other') extra = d.message ? `：${escapeHtml(d.message)}` : '';
+        rows.push(`<div class="summary-row"><span>${escapeHtml(s.name)}</span><span class="tag ${d.status}">${labelMap[d.status] || d.status}${extra}</span></div>`);
       }
       if(rows.length === 0) continue;
       html += `<div class="summary-date"><div class="d-title">${shortLabel(ds)}</div>${rows.join('')}</div>`;
@@ -398,4 +481,3 @@ initLiff();
  
 </body>
 </html>
- 
