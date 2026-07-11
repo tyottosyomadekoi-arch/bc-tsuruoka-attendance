@@ -215,13 +215,25 @@ function toggleCalDay(ds){
 async function savePracticeDates(){
   const ym = document.getElementById('monthInput').value;
   const arr = Array.from(adminSelection).sort();
+  if(arr.length === 0){
+    alert('練習日が1つも選ばれていません。カレンダーの日付をタップしてから保存してください。');
+    return;
+  }
   try{
-    await apiPost({ action: 'savePracticeDates', month: ym, dates: arr });
+    const result = await apiPost({ action: 'savePracticeDates', month: ym, dates: arr });
+    if(!result || !result.ok){
+      alert('保存に失敗しました。もう一度お試しください。');
+      return;
+    }
     practiceDates = arr;
     document.getElementById('adminPanel').style.display = 'none';
     renderChildren();
     loadSummary();
-  }catch(e){ console.error(e); alert('保存に失敗しました。APPS_SCRIPT_URLが正しく設定されているか確認してください。'); }
+    alert(`${arr.length}件の練習日を保存しました。`);
+  }catch(e){
+    console.error(e);
+    alert('保存に失敗しました。通信エラーの可能性があります。(' + (e.message || e) + ')');
+  }
 }
  
 async function loadPracticeDates(){
