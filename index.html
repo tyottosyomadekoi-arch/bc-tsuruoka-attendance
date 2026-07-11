@@ -143,15 +143,16 @@ let adminSelection = new Set();
 let childCounter = 0;
  
 async function apiGet(action, params){
-  const q = new URLSearchParams({ action, ...params }).toString();
-  const res = await fetch(`${APPS_SCRIPT_URL}?${q}`);
+  const q = new URLSearchParams({ action, ...params, _t: Date.now() }).toString();
+  const res = await fetch(`${APPS_SCRIPT_URL}?${q}`, { cache: 'no-store' });
   return res.json();
 }
 async function apiPost(payload){
   const res = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' }, // Apps Script simple trigger回避のためtext/plainで送信
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    cache: 'no-store'
   });
   return res.json();
 }
