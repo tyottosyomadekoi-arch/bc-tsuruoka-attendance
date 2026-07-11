@@ -34,7 +34,7 @@
   .field{margin-bottom:12px;}
   .row-between{display:flex;justify-content:space-between;align-items:center;}
   .link-btn{background:none;border:none;color:var(--navy);font-size:12.5px;font-weight:700;cursor:pointer;padding:4px 0;}
-
+ 
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:8px;}
   .cal-wd{text-align:center;font-size:10.5px;color:var(--muted);padding-bottom:2px;}
   .cal-day{
@@ -44,7 +44,7 @@
   .cal-day.blank{border:none;cursor:default;}
   .cal-day.active{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:700;}
   .save-btn{margin-top:10px;width:100%;background:var(--navy);color:#fff;border:none;padding:10px;border-radius:8px;font-size:13.5px;font-weight:700;cursor:pointer;}
-
+ 
   .child-block{border:1.5px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;}
   .child-block .row-between{margin-bottom:10px;}
   .remove-child{color:var(--early);background:none;border:none;font-size:12px;cursor:pointer;}
@@ -62,11 +62,11 @@
   .time-inline.show{display:flex;}
   .time-inline input{width:120px;}
   .time-inline .tlabel{font-size:12px;color:var(--muted);}
-
+ 
   .add-child-btn{width:100%;border:1.5px dashed var(--border);background:#fff;color:var(--navy);padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px;}
   .submit-btn{width:100%;background:var(--navy);color:#fff;border:none;padding:13px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}
   .status-msg{font-size:12.5px;text-align:center;margin-top:10px;color:var(--muted);}
-
+ 
   .summary-date{padding:10px 4px;border-bottom:1px solid var(--border);}
   .summary-date:last-child{border-bottom:none;}
   .summary-date .d-title{font-size:13px;font-weight:700;margin-bottom:6px;}
@@ -80,7 +80,7 @@
 </style>
 </head>
 <body>
-
+ 
 <div class="header">
   <svg class="shuttle" viewBox="0 0 100 100" fill="#fff">
     <circle cx="50" cy="20" r="12"/>
@@ -89,9 +89,9 @@
   <h1>BC鶴岡 練習出欠確認</h1>
   <p id="userGreeting">LINEで読み込み中…</p>
 </div>
-
+ 
 <div class="wrap">
-
+ 
   <div class="card">
     <div class="row-between">
       <h2 style="margin-bottom:0;">対象月</h2>
@@ -106,33 +106,33 @@
       <button class="save-btn" onclick="savePracticeDates()">この月の練習日を保存</button>
     </div>
   </div>
-
+ 
   <div id="childrenContainer"></div>
   <button class="add-child-btn" onclick="addChild()">＋ お子様を追加（兄弟対応）</button>
-
+ 
   <div class="card">
     <button class="submit-btn" id="submitBtn" onclick="submitAll()">この月の出欠をまとめて送信</button>
     <div class="status-msg" id="statusMsg"></div>
   </div>
-
+ 
   <div class="card">
     <h2>今月の全体状況</h2>
     <div id="summaryContainer"><div class="empty">読み込み中…</div></div>
   </div>
-
+ 
   <div class="liff-note">BC鶴岡 / 鶴六 練習管理</div>
 </div>
-
+ 
 <script>
 // ▼▼ Google Apps Scriptの「ウェブアプリのURL」をここに貼り付けてください ▼▼
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxTVYquhLcTtoHWMlIYxxiGJB4MfI2XwUsAlqG-EYgSHYTXM9JBVhgc8fztimU8bDke/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwidpurYmgEAvt_XjqiECQcWi_6vnT0gid8yli25zbEren7jWNH4SfUiWkKPxysSYGl1A/exec';
 // ▲▲ ---------------------------------------------------------- ▲▲
-
+ 
 let lineDisplayName = null;
 let practiceDates = [];
 let adminSelection = new Set();
 let childCounter = 0;
-
+ 
 async function apiGet(action, params){
   const q = new URLSearchParams({ action, ...params }).toString();
   const res = await fetch(`${APPS_SCRIPT_URL}?${q}`);
@@ -146,15 +146,15 @@ async function apiPost(payload){
   });
   return res.json();
 }
-
+ 
 const WD = ['日','月','火','水','木','金','土'];
-
+ 
 function currentMonthStr(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
 document.getElementById('monthInput').value = currentMonthStr();
-
+ 
 function daysInMonth(ym){
   const [y,m] = ym.split('-').map(Number);
   return new Date(y, m, 0).getDate();
@@ -174,17 +174,19 @@ function shortLabel(dstr){
   const parts = dstr.split('-');
   return `${parseInt(parts[1])}/${parseInt(parts[2])}(${weekdayOf(dstr)})`;
 }
-
+ 
 function toggleAdmin(){
   const panel = document.getElementById('adminPanel');
   const show = panel.style.display === 'none';
   panel.style.display = show ? 'block' : 'none';
-  if(show) renderCalGrid();
+  if(show){
+    adminSelection = new Set(practiceDates);
+    renderCalGrid();
+  }
 }
-
+ 
 function renderCalGrid(){
   const ym = document.getElementById('monthInput').value;
-  adminSelection = new Set(practiceDates);
   const grid = document.getElementById('calGrid');
   const total = daysInMonth(ym);
   const offset = firstWeekday(ym);
@@ -212,7 +214,7 @@ async function savePracticeDates(){
     loadSummary();
   }catch(e){ console.error(e); alert('保存に失敗しました。APPS_SCRIPT_URLが正しく設定されているか確認してください。'); }
 }
-
+ 
 async function loadPracticeDates(){
   const ym = document.getElementById('monthInput').value;
   try{
@@ -225,7 +227,7 @@ async function loadPracticeDates(){
   renderChildren();
   loadSummary();
 }
-
+ 
 function addChild(prefillName){
   childCounter++;
   const id = `child_${childCounter}`;
@@ -288,13 +290,13 @@ function toggleChip(el){
     timeEl.classList.toggle('show', on);
   }
 }
-
+ 
 async function submitAll(){
   const ym = document.getElementById('monthInput').value;
   const msg = document.getElementById('statusMsg');
   const blocks = document.querySelectorAll('.child-block');
   if(blocks.length === 0){ msg.textContent = 'お子様を追加してください'; return; }
-
+ 
   let ok = true;
   for(const block of blocks){
     const name = block.querySelector('.childName').value.trim();
@@ -324,7 +326,7 @@ async function submitAll(){
   msg.textContent = ok ? 'この月の出欠を送信しました。ありがとうございます！' : '一部送信に失敗しました。もう一度お試しください。';
   loadSummary();
 }
-
+ 
 async function loadSummary(){
   const ym = document.getElementById('monthInput').value;
   const container = document.getElementById('summaryContainer');
@@ -358,17 +360,17 @@ async function loadSummary(){
     container.innerHTML = '<div class="empty">読み込みに失敗しました</div>';
   }
 }
-
+ 
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
+ 
 document.getElementById('monthInput').addEventListener('change', () => {
   document.getElementById('childrenContainer').innerHTML = '';
   document.getElementById('adminPanel').style.display = 'none';
   loadPracticeDates();
 });
-
+ 
 async function initLiff(){
   const greeting = document.getElementById('userGreeting');
   try{
@@ -378,7 +380,7 @@ async function initLiff(){
       return;
     }
     // Replace YOUR_LIFF_ID with the ID issued in the LINE Developers console
-    await liff.init({ liffId: 'YOUR_LIFF_ID' });
+    await liff.init({ liffId: '2010667466-PcFS6PC6' });
     if(!liff.isLoggedIn()){ liff.login(); return; }
     const profile = await liff.getProfile();
     lineDisplayName = profile.displayName;
@@ -390,9 +392,10 @@ async function initLiff(){
     loadPracticeDates();
   }
 }
-
+ 
 initLiff();
 </script>
-
+ 
 </body>
 </html>
+ 
