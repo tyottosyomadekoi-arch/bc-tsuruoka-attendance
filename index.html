@@ -108,7 +108,7 @@
   <div class="card">
     <div class="row-between">
       <h2 style="margin-bottom:0;">対象月</h2>
-      <button class="link-btn" id="adminToggle" onclick="toggleAdmin()">日程を編集（コーチ用）</button>
+      <button class="link-btn" id="adminToggle" onclick="toggleAdmin()">練習日程登録（コーチ用）</button>
     </div>
     <div class="field" style="margin-top:10px;">
       <input type="month" id="monthInput">
@@ -364,7 +364,7 @@ function renderDatesForChild(block){
         <span class="tlabel">退出予定</span><input type="time" class="earlyTime">
       </div>
       <div class="other-inline" data-type="other">
-        <input type="text" class="otherMessage" placeholder="内容を入力（例：体調不良のため30分遅れます）">
+        <input type="text" class="otherMessage" placeholder="フリーメッセージ">
       </div>
     </div>
   `).join('');
@@ -526,3 +526,4 @@ initLiff();
  
 </body>
 </html>
+ 
