@@ -23,6 +23,7 @@
     --text: #2A3540;
   }
   *{box-sizing:border-box;}
+  button, .chip, .cal-day, .link-btn, .remove-child{touch-action:manipulation;}
   body{margin:0;font-family:Arial,"Hiragino Kaku Gothic ProN","Meiryo",sans-serif;background:var(--light-blue);color:var(--text);min-height:100vh;}
   .header{background:var(--navy);color:#fff;padding:20px 20px 24px;position:relative;overflow:hidden;}
   .header h1{margin:0;font-size:18px;font-weight:700;}
@@ -52,7 +53,7 @@
  
   .child-block{border:1.5px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;}
   .child-block .row-between{margin-bottom:10px;}
-  .remove-child{color:var(--early);background:none;border:none;font-size:12px;cursor:pointer;}
+  .remove-child{color:var(--early);background:none;border:none;font-size:12px;cursor:pointer;touch-action:manipulation;}
   .date-row{border-bottom:1px solid var(--border);padding:10px 2px;}
   .date-row:last-child{border-bottom:none;}
   .date-row .date-label{font-size:13.5px;font-weight:700;margin-bottom:6px;}
@@ -107,7 +108,7 @@
   <div class="card">
     <div class="row-between">
       <h2 style="margin-bottom:0;">対象月</h2>
-      <button class="link-btn" id="adminToggle" onclick="toggleAdmin()">日程を編集</button>
+      <button class="link-btn" id="adminToggle" onclick="toggleAdmin()">日程を編集（コーチ用）</button>
     </div>
     <div class="field" style="margin-top:10px;">
       <input type="month" id="monthInput">
@@ -354,7 +355,7 @@ function renderDatesForChild(block){
         <div class="chip" data-type="absent" onclick="selectChip(this)">欠席</div>
         <div class="chip" data-type="late" onclick="selectChip(this)">遅刻</div>
         <div class="chip" data-type="early" onclick="selectChip(this)">早退</div>
-        <div class="chip" data-type="other" onclick="selectChip(this)">その他</div>
+        <div class="chip" data-type="other" onclick="selectChip(this)">フリーメッセージ</div>
       </div>
       <div class="time-inline" data-type="late">
         <span class="tlabel">到着予定</span><input type="time" class="lateTime">
@@ -467,7 +468,7 @@ async function loadSummary(){
       return;
     }
     let html = '';
-    const labelMap = { attend: '出席', absent: '欠席', late: '遅刻', early: '早退', other: 'その他' };
+    const labelMap = { attend: '出席', absent: '欠席', late: '遅刻', early: '早退', other: 'フリーメッセージ' };
     for(const ds of practiceDates){
       const rows = [];
       for(const s of submissions){
