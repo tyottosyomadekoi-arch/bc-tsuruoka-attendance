@@ -80,14 +80,19 @@
 
   .summary-date{padding:10px 4px;border-bottom:1px solid var(--border);}
   .summary-date:last-child{border-bottom:none;}
-  .summary-date .d-title{font-size:13px;font-weight:700;margin-bottom:6px;}
-  .summary-row{font-size:12.5px;display:flex;justify-content:space-between;padding:3px 0;color:var(--text);}
-  .summary-row .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
-  .tag.attend{background:#EAF6EE;color:var(--ok);}
-  .tag.absent{background:#FBE9E8;color:var(--absent);}
-  .tag.late{background:#FBF3E1;color:var(--late);}
-  .tag.early{background:#FCEDE4;color:var(--early);}
-  .tag.other{background:#EFECF5;color:var(--other);}
+  .summary-date .d-title{font-size:13.5px;font-weight:700;margin-bottom:8px;}
+  .status-group{margin-bottom:8px;}
+  .status-group:last-child{margin-bottom:0;}
+  .status-group .group-label{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;margin-bottom:5px;
+  }
+  .status-group .group-names{font-size:12.5px;color:var(--text);line-height:1.6;padding-left:2px;}
+  .group-label.attend{background:#EAF6EE;color:var(--ok);}
+  .group-label.absent{background:#FBE9E8;color:var(--absent);}
+  .group-label.late{background:#FBF3E1;color:var(--late);}
+  .group-label.early{background:#FCEDE4;color:var(--early);}
+  .group-label.other{background:#EFECF5;color:var(--other);}
   .empty{text-align:center;color:var(--muted);font-size:12.5px;padding:14px 0;}
   .liff-note{font-size:11px;color:var(--muted);text-align:center;padding-top:2px;}
 </style>
@@ -469,18 +474,28 @@ async function loadSummary(){
     }
     let html = '';
     const labelMap = { attend: '出席', absent: '欠席', late: '遅刻', early: '早退', other: 'フリーメッセージ' };
+    const statusOrder = ['attend', 'absent', 'late', 'early', 'other'];
     for(const ds of practiceDates){
-      const rows = [];
+      const groups = { attend: [], absent: [], late: [], early: [], other: [] };
       for(const s of submissions){
         const d = s.days ? s.days[ds] : null;
-        if(!d || !d.status) continue;
-        let extra = '';
-        if(d.status === 'late' || d.status === 'early') extra = d.time ? ` ${d.time}` : '';
-        if(d.status === 'other') extra = d.message ? `：${escapeHtml(d.message)}` : '';
-        rows.push(`<div class="summary-row"><span>${escapeHtml(s.name)}</span><span class="tag ${d.status}">${labelMap[d.status] || d.status}${extra}</span></div>`);
+        if(!d || !d.status || !groups[d.status]) continue;
+        let entryText = escapeHtml(s.name);
+        if(d.status === 'late' || d.status === 'early') entryText += d.time ? `(${d.time})` : '';
+        if(d.status === 'other') entryText += d.message ? `:${escapeHtml(d.message)}` : '';
+        groups[d.status].push(entryText);
       }
-      if(rows.length === 0) continue;
-      html += `<div class="summary-date"><div class="d-title">${shortLabel(ds)}</div>${rows.join('')}</div>`;
+      const totalCount = statusOrder.reduce((sum, k) => sum + groups[k].length, 0);
+      if(totalCount === 0) continue;
+      const groupsHtml = statusOrder
+        .filter(k => groups[k].length > 0)
+        .map(k => `
+          <div class="status-group">
+            <span class="group-label ${k}">${labelMap[k]}（${groups[k].length}）</span>
+            <div class="group-names">${groups[k].join('、')}</div>
+          </div>
+        `).join('');
+      html += `<div class="summary-date"><div class="d-title">${shortLabel(ds)}</div>${groupsHtml}</div>`;
     }
     container.innerHTML = html || '<div class="empty">まだ回答がありません</div>';
   }catch(e){
