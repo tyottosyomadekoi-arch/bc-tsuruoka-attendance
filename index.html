@@ -51,6 +51,43 @@
   .cal-day.active{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:700;}
   .save-btn{margin-top:10px;width:100%;background:var(--navy);color:#fff;border:none;padding:10px;border-radius:8px;font-size:13.5px;font-weight:700;cursor:pointer;}
 
+  .detail-row{border:1.5px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;}
+  .detail-row .detail-date{font-size:13px;font-weight:700;margin-bottom:8px;}
+  .loc-radios{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .loc-radio{
+    border:1.5px solid var(--border);border-radius:20px;padding:5px 11px;font-size:12px;font-weight:700;
+    cursor:pointer;color:var(--muted);background:#fff;touch-action:manipulation;
+  }
+  .loc-radio.on{border-color:var(--navy);background:var(--light-blue);color:var(--navy);}
+  .loc-radio.on[data-loc="六コミ"], .loc-badge[data-loc="六コミ"]{border-color:#1F5C99;background:#E8F1FA;color:#1F5C99;}
+  .loc-radio.on[data-loc="武道館"], .loc-badge[data-loc="武道館"]{border-color:#6B5B95;background:#EFECF7;color:#6B5B95;}
+  .loc-radio.on[data-loc="宝田"], .loc-badge[data-loc="宝田"]{border-color:#2E8B8B;background:#E6F5F5;color:#2E8B8B;}
+  .loc-radio.on[data-loc="櫛スポ"], .loc-badge[data-loc="櫛スポ"]{border-color:#C0682B;background:#FBEEE4;color:#C0682B;}
+  .loc-radio.on[data-loc="羽黒体"], .loc-badge[data-loc="羽黒体"]{border-color:#2E8B57;background:#E9F6EF;color:#2E8B57;}
+  .loc-radio.on[data-loc="藤島体"], .loc-badge[data-loc="藤島体"]{border-color:#B0417A;background:#FAE9F1;color:#B0417A;}
+  .loc-radio.on[data-loc="その他"], .loc-badge[data-loc="その他"]{border-color:#8B5A3C;background:#F3E9DE;color:#8B5A3C;}
+  .loc-badge{display:inline-block;border:1.5px solid var(--border);border-radius:10px;padding:1px 9px;font-size:11px;font-weight:700;margin-right:6px;}
+  .detail-row input[type=time]{width:120px;margin-bottom:8px;}
+  .time-range{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+  .time-range input[type=time]{margin-bottom:0;}
+  .time-range .tlabel{font-size:12px;color:var(--muted);}
+  .detail-row input[type=text]{width:100%;}
+  .summary-textarea{
+    width:100%;min-height:70px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;
+    font-size:13.5px;font-family:inherit;color:var(--text);background:#fff;resize:vertical;
+  }
+  #announcementCard ul{margin:0 0 10px;padding-left:18px;font-size:13px;color:var(--text);}
+  #announcementCard .announce-label{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:4px;}
+  .date-meta{font-size:11.5px;color:var(--muted);margin:-2px 0 8px;}
+  .date-note{
+    background:#FFF7E0;border-left:3px solid var(--late);border-radius:6px;
+    padding:6px 10px;font-size:12.5px;font-weight:600;color:var(--text);margin:0 0 8px;
+  }
+  .duty-line{
+    background:#EFECF5;border-left:3px solid var(--other);border-radius:6px;
+    padding:6px 10px;font-size:12.5px;font-weight:600;color:var(--text);margin:0 0 8px;
+  }
+
   .child-block{border:1.5px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;}
   .child-block .row-between{margin-bottom:10px;}
   .remove-child{color:var(--early);background:none;border:none;font-size:12px;cursor:pointer;touch-action:manipulation;}
@@ -122,8 +159,21 @@
     <div id="adminPanel" style="display:none;">
       <label class="field-label">練習日をタップして設定（コーチ用）</label>
       <div class="cal-grid" id="calGrid"></div>
+      <div id="dateDetailList" style="margin-top:10px;"></div>
       <button class="save-btn" onclick="savePracticeDates()">この月の練習日を保存</button>
+
+      <label class="field-label" style="margin-top:16px;">今月のお知らせ（コーチ用・箇条書き）</label>
+      <textarea id="currentMonthSummaryInput" class="summary-textarea" placeholder="例：連絡事項を入れてください"></textarea>
+      <label class="field-label" style="margin-top:10px;">来月のお知らせ（コーチ用・箇条書き）</label>
+      <textarea id="nextMonthSummaryInput" class="summary-textarea" placeholder="例：連絡事項を入れてください"></textarea>
+      <button class="save-btn" onclick="saveMonthSummary()">サマリーを保存</button>
     </div>
+  </div>
+
+  <div class="card" id="announcementCard" style="display:none;">
+    <h2>お知らせ</h2>
+    <div id="currentMonthSummaryDisplay"></div>
+    <div id="nextMonthSummaryDisplay"></div>
   </div>
 
   <div id="childrenContainer"></div>
@@ -148,9 +198,24 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXe5-JcxXVErPe
 // ▲▲ ---------------------------------------------------------- ▲▲
 
 let lineDisplayName = null;
-let practiceDates = [];
-let adminSelection = new Set();
+let practiceDates = []; // array of {date, location, time, message}
+let adminSelection = new Map(); // date -> {location, time, message}
 let childCounter = 0;
+const LOCATIONS = ['六コミ', '武道館', '宝田', '櫛スポ', '羽黒体', '藤島体', 'その他'];
+
+// 曜日ごとの標準会場・時間（0=日, 1=月, ... 6=土）。指定のない曜日はデフォルトなし。
+const WEEKDAY_DEFAULTS = {
+  0: { location: '六コミ', startTime: '9:00',  endTime: '12:45' },
+  2: { location: '六コミ', startTime: '19:00', endTime: '20:50' },
+  6: { startTime: '18:30', endTime: '20:30' }
+};
+function defaultDetailForDate(ds){
+  const weekday = new Date(ds + 'T00:00:00').getDay();
+  const wd = WEEKDAY_DEFAULTS[weekday];
+  const base = { location: '', customLocation: '', startTime: '19:00', endTime: '21:00', message: '', parentDuty: '' };
+  if(wd) return { ...base, location: wd.location || '', startTime: wd.startTime || base.startTime, endTime: wd.endTime || base.endTime };
+  return base;
+}
 
 async function apiGet(action, params){
   const q = new URLSearchParams({ action, ...params, _t: Date.now() }).toString();
@@ -199,8 +264,10 @@ function toggleAdmin(){
   const show = panel.style.display === 'none';
   panel.style.display = show ? 'block' : 'none';
   if(show){
-    adminSelection = new Set(practiceDates);
+    adminSelection = new Map(practiceDates.map(pd => [pd.date, { location: pd.location||'', customLocation: pd.customLocation||'', startTime: pd.startTime||'', endTime: pd.endTime||'', message: pd.message||'', parentDuty: pd.parentDuty||'' }]));
     renderCalGrid();
+    renderDateDetailList();
+    loadMonthSummaryIntoInputs();
   }
 }
 
@@ -219,12 +286,61 @@ function renderCalGrid(){
   grid.innerHTML = html;
 }
 function toggleCalDay(ds){
-  if(adminSelection.has(ds)) adminSelection.delete(ds); else adminSelection.add(ds);
+  if(adminSelection.has(ds)) adminSelection.delete(ds);
+  else adminSelection.set(ds, defaultDetailForDate(ds));
   renderCalGrid();
+  renderDateDetailList();
 }
+
+function renderDateDetailList(){
+  const container = document.getElementById('dateDetailList');
+  const dates = Array.from(adminSelection.keys()).sort();
+  if(dates.length === 0){
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = dates.map(ds => {
+    const detail = adminSelection.get(ds);
+    const radios = LOCATIONS.map(loc => `
+      <div class="loc-radio ${detail.location === loc ? 'on' : ''}" data-loc="${loc}" onclick="selectLocation(this,'${ds}','${loc}')">${loc}</div>
+    `).join('');
+    const showCustom = detail.location === 'その他';
+    return `
+      <div class="detail-row" data-date="${ds}">
+        <div class="detail-date">${shortLabel(ds)}</div>
+        <div class="loc-radios">${radios}</div>
+        <input type="text" class="loc-custom-input" style="display:${showCustom ? 'block' : 'none'};margin-bottom:8px;" value="${detail.customLocation ? escapeHtml(detail.customLocation) : ''}" placeholder="会場名を入力" oninput="updateDateDetail('${ds}','customLocation',this.value)">
+        <div class="time-range">
+          <input type="time" value="${detail.startTime || ''}" oninput="updateDateDetail('${ds}','startTime',this.value)">
+          <span class="tlabel">〜</span>
+          <input type="time" value="${detail.endTime || ''}" oninput="updateDateDetail('${ds}','endTime',this.value)">
+        </div>
+        <input type="text" value="${detail.message ? escapeHtml(detail.message) : ''}" placeholder="フリーメッセージ" oninput="updateDateDetail('${ds}','message',this.value)">
+        <label class="field-label" style="margin-top:8px;">保護者練習当番欄</label>
+        <input type="text" value="${detail.parentDuty ? escapeHtml(detail.parentDuty) : ''}" placeholder="当番の保護者名など" oninput="updateDateDetail('${ds}','parentDuty',this.value)">
+      </div>
+    `;
+  }).join('');
+}
+function selectLocation(el, ds, loc){
+  const row = el.closest('.detail-row');
+  row.querySelectorAll('.loc-radio').forEach(r => r.classList.remove('on'));
+  el.classList.add('on');
+  const detail = adminSelection.get(ds);
+  if(detail) detail.location = loc;
+  const customInput = row.querySelector('.loc-custom-input');
+  if(customInput) customInput.style.display = (loc === 'その他') ? 'block' : 'none';
+}
+function updateDateDetail(ds, field, value){
+  const detail = adminSelection.get(ds);
+  if(detail) detail[field] = value;
+}
+
 async function savePracticeDates(){
   const ym = document.getElementById('monthInput').value;
-  const arr = Array.from(adminSelection).sort();
+  const arr = Array.from(adminSelection.entries())
+    .map(([date, d]) => ({ date, location: d.location || '', customLocation: d.customLocation || '', startTime: d.startTime || '', endTime: d.endTime || '', message: d.message || '', parentDuty: d.parentDuty || '' }))
+    .sort((a,b) => a.date.localeCompare(b.date));
   if(arr.length === 0){
     alert('練習日が1つも選ばれていません。カレンダーの日付をタップしてから保存してください。');
     return;
@@ -246,17 +362,29 @@ async function savePracticeDates(){
   }
 }
 
+function normalizePracticeDates(raw){
+  return (raw || []).map(item => {
+    if(typeof item === 'string') return { date: item, location: '', customLocation: '', startTime: '', endTime: '', message: '', parentDuty: '' };
+    // migrate legacy single "time" field into startTime
+    if(item.time && !item.startTime && !item.endTime){
+      return { date: item.date, location: item.location||'', customLocation: item.customLocation||'', startTime: item.time, endTime: '', message: item.message||'', parentDuty: item.parentDuty||'' };
+    }
+    return { date: item.date, location: item.location||'', customLocation: item.customLocation||'', startTime: item.startTime||'', endTime: item.endTime||'', message: item.message||'', parentDuty: item.parentDuty||'' };
+  });
+}
+
 async function loadPracticeDates(){
   const ym = document.getElementById('monthInput').value;
   try{
     const r = await apiGet('getPracticeDates', { month: ym });
-    practiceDates = r.dates || [];
+    practiceDates = normalizePracticeDates(r.dates);
   }catch(e){
     console.error(e);
     practiceDates = [];
   }
   renderChildren();
   loadSummary();
+  loadMonthSummaryDisplay();
 }
 
 function addChild(prefillName){
@@ -347,15 +475,35 @@ async function loadAllChildrenForSubmitter(){
     names.forEach(n => addChild(n));
   }
 }
+function locationBadge(pd){
+  if(!pd || !pd.location) return '';
+  const label = (pd.location === 'その他' && pd.customLocation) ? pd.customLocation : pd.location;
+  return `<span class="loc-badge" data-loc="${escapeHtml(pd.location)}">${escapeHtml(label)}</span>`;
+}
+
+function formatTimeRange(pd){
+  if(pd.startTime && pd.endTime) return `${pd.startTime}〜${pd.endTime}`;
+  if(pd.startTime) return `${pd.startTime}〜`;
+  if(pd.endTime) return `〜${pd.endTime}`;
+  return '';
+}
+
 function renderDatesForChild(block){
   const list = block.querySelector('.datesList');
   if(practiceDates.length === 0){
     list.innerHTML = `<div class="empty">この月の練習日がまだ設定されていません</div>`;
     return;
   }
-  list.innerHTML = practiceDates.map(ds => `
+  list.innerHTML = practiceDates.map(pd => {
+    const ds = pd.date;
+    const timeRange = formatTimeRange(pd);
+    const metaLine = (pd.location || timeRange) ? `<div class="date-meta">${locationBadge(pd)}${timeRange ? escapeHtml(timeRange) : ''}</div>` : '';
+    const msgLine = pd.message ? `<div class="date-note">🏸 ${escapeHtml(pd.message)}</div>` : '';
+    const dutyLine = pd.parentDuty ? `<div class="duty-line">👪 当番: ${escapeHtml(pd.parentDuty)}</div>` : '';
+    return `
     <div class="date-row" data-date="${ds}">
       <div class="date-label">${shortLabel(ds)}</div>
+      ${metaLine}${msgLine}${dutyLine}
       <div class="chips">
         <div class="chip" data-type="attend" onclick="selectChip(this)">参加</div>
         <div class="chip" data-type="absent" onclick="selectChip(this)">欠席</div>
@@ -373,7 +521,8 @@ function renderDatesForChild(block){
         <input type="text" class="otherMessage" placeholder="フリーメッセージ">
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 function selectChip(el){
   const row = el.closest('.date-row');
@@ -476,7 +625,8 @@ async function loadSummary(){
     let html = '';
     const labelMap = { attend: '出席', absent: '欠席', late: '遅刻', early: '早退', other: 'フリーメッセージ' };
     const statusOrder = ['attend', 'absent', 'late', 'early', 'other'];
-    for(const ds of practiceDates){
+    for(const pd of practiceDates){
+      const ds = pd.date;
       const groups = { attend: [], absent: [], late: [], early: [], other: [] };
       for(const s of submissions){
         const d = s.days ? s.days[ds] : null;
@@ -488,6 +638,10 @@ async function loadSummary(){
       }
       const totalCount = statusOrder.reduce((sum, k) => sum + groups[k].length, 0);
       if(totalCount === 0) continue;
+      const timeRange = formatTimeRange(pd);
+      const metaLine = (pd.location || timeRange) ? `<div class="date-meta">${locationBadge(pd)}${timeRange ? escapeHtml(timeRange) : ''}</div>` : '';
+      const msgLine = pd.message ? `<div class="date-note">🏸 ${escapeHtml(pd.message)}</div>` : '';
+      const dutyLine = pd.parentDuty ? `<div class="duty-line">👪 当番: ${escapeHtml(pd.parentDuty)}</div>` : '';
       const groupsHtml = statusOrder
         .filter(k => groups[k].length > 0)
         .map(k => `
@@ -496,7 +650,7 @@ async function loadSummary(){
             <div class="group-names">${groups[k].map(n => `<div class="name-item">${n}</div>`).join('')}</div>
           </div>
         `).join('');
-      html += `<div class="summary-date"><div class="d-title">${shortLabel(ds)}</div>${groupsHtml}</div>`;
+      html += `<div class="summary-date"><div class="d-title">${shortLabel(ds)}</div>${metaLine}${msgLine}${dutyLine}${groupsHtml}</div>`;
     }
     container.innerHTML = html || '<div class="empty">まだ回答がありません</div>';
   }catch(e){
@@ -507,6 +661,63 @@ async function loadSummary(){
 
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function bulletize(text){
+  return text.split('\n').map(line => line.trim()).filter(Boolean)
+    .map(line => `<li>${escapeHtml(line.replace(/^[・\-*]\s*/, ''))}</li>`).join('');
+}
+
+async function loadMonthSummaryDisplay(){
+  const ym = document.getElementById('monthInput').value;
+  try{
+    const r = await apiGet('getMonthSummary', { month: ym });
+    const current = (r.currentSummary || '').trim();
+    const next = (r.nextSummary || '').trim();
+    const card = document.getElementById('announcementCard');
+    const curEl = document.getElementById('currentMonthSummaryDisplay');
+    const nextEl = document.getElementById('nextMonthSummaryDisplay');
+    if(!current && !next){
+      card.style.display = 'none';
+      curEl.innerHTML = '';
+      nextEl.innerHTML = '';
+      return;
+    }
+    card.style.display = 'block';
+    curEl.innerHTML = current ? `<div class="announce-label">今月のお知らせ</div><ul>${bulletize(current)}</ul>` : '';
+    nextEl.innerHTML = next ? `<div class="announce-label">来月のお知らせ</div><ul>${bulletize(next)}</ul>` : '';
+  }catch(e){
+    console.error(e);
+  }
+}
+
+async function loadMonthSummaryIntoInputs(){
+  const ym = document.getElementById('monthInput').value;
+  try{
+    const r = await apiGet('getMonthSummary', { month: ym });
+    document.getElementById('currentMonthSummaryInput').value = r.currentSummary || '';
+    document.getElementById('nextMonthSummaryInput').value = r.nextSummary || '';
+  }catch(e){
+    console.error(e);
+  }
+}
+
+async function saveMonthSummary(){
+  const ym = document.getElementById('monthInput').value;
+  const current = document.getElementById('currentMonthSummaryInput').value;
+  const next = document.getElementById('nextMonthSummaryInput').value;
+  try{
+    const result = await apiPost({ action: 'saveMonthSummary', month: ym, currentSummary: current, nextSummary: next });
+    if(!result || !result.ok){
+      alert('サマリーの保存に失敗しました。');
+      return;
+    }
+    alert('サマリーを保存しました。');
+    loadMonthSummaryDisplay();
+  }catch(e){
+    console.error(e);
+    alert('サマリーの保存に失敗しました。(' + (e.message || e) + ')');
+  }
 }
 
 document.getElementById('monthInput').addEventListener('change', () => {
