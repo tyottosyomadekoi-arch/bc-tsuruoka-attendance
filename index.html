@@ -231,7 +231,7 @@ const LOCATIONS = ['六コミ', '武道館', '宝田', '櫛スポ', '羽黒体',
 const WEEKDAY_DEFAULTS = {
   0: { location: '六コミ', startTime: '09:00',  endTime: '12:45' },
   2: { location: '六コミ', startTime: '19:00', endTime: '20:50' },
-  6: { startTime: '18:30', endTime: '20:30' }
+  6: { location: '六コミ', startTime: '18:30', endTime: '20:30' }
 };
 function defaultDetailForDate(ds){
   const weekday = new Date(ds + 'T00:00:00').getDay();
