@@ -44,8 +44,13 @@
     align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 10px;
   }
   .png-modal-inner{background:#fff;border-radius:12px;padding:12px;max-width:100%;text-align:center;}
+  .png-modal-btns{display:flex;gap:8px;justify-content:center;margin-bottom:8px;}
+  .png-modal-save{
+    background:#16A34A;color:#fff;border:none;
+    border-radius:8px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;
+  }
   .png-modal-close{
-    display:block;margin:0 auto 8px;background:var(--navy);color:#fff;border:none;
+    background:var(--navy);color:#fff;border:none;
     border-radius:8px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;
   }
   .png-modal-hint{font-size:11.5px;color:var(--muted);margin-bottom:8px;}
@@ -266,8 +271,11 @@
 
 <div id="pngModal" class="png-modal">
   <div class="png-modal-inner">
-    <button class="png-modal-close" onclick="closePngModal()">閉じる</button>
-    <div class="png-modal-hint">画像を長押しして保存できます</div>
+    <div class="png-modal-btns">
+      <button class="png-modal-save" onclick="saveCalendarPNG()">保存</button>
+      <button class="png-modal-close" onclick="closePngModal()">閉じる</button>
+    </div>
+    <div class="png-modal-hint">「保存」で画像をダウンロード、または長押しでも保存できます</div>
     <img id="pngModalImg" alt="練習日程表">
   </div>
 </div>
@@ -327,6 +335,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXe5-JcxXVErPe
 let lineDisplayName = null;
 let practiceDates = []; // array of {date, slots: [{location, customLocation, startTime, endTime, categories, coaches, message}, ...]}
 let adminSelection = new Map(); // date -> {slots: [...]}
+let lastCalendarPNG = null; // { dataUrl, filename } of the most recently generated schedule image
 let childCounter = 0;
 const LOCATIONS = ['六コミ', '武道館', '宝田', '櫛スポ', '羽黒体', '藤島体', '小真木原ア', '多目的', 'カスタム'];
 const CATEGORIES = ['全員', 'カスタム', '1班', '2班', '3班'];
@@ -1110,14 +1119,14 @@ async function exportCalendarPNG(){
     const total = daysInMonth(ym);
     const offset = firstWeekday(ym);
 
-    await ensureHolidaysLoaded(Array.from({length: total}, (_, i) => dateStr(ym, i+1)));
-
     let currentSummary = '', nextSummary = '';
-    try{
-      const r = await apiGet('getMonthSummary', { month: ym });
-      currentSummary = r.currentSummary || '';
-      nextSummary = r.nextSummary || '';
-    }catch(e){ console.error(e); }
+    await Promise.all([
+      ensureHolidaysLoaded(Array.from({length: total}, (_, i) => dateStr(ym, i+1))),
+      apiGet('getMonthSummary', { month: ym }).then(r => {
+        currentSummary = r.currentSummary || '';
+        nextSummary = r.nextSummary || '';
+      }).catch(e => console.error(e))
+    ]);
 
     const practiceByDate = {};
     practiceDates.forEach(pd => { practiceByDate[pd.date] = pd; });
@@ -1384,6 +1393,7 @@ async function exportCalendarPNG(){
     }
 
     const dataUrl = canvas.toDataURL('image/png');
+    lastCalendarPNG = { dataUrl, filename: `鶴六練習予定表_${ym}.png` };
     document.getElementById('pngModalImg').src = dataUrl;
     document.getElementById('pngModal').style.display = 'flex';
   }catch(e){
@@ -1395,6 +1405,15 @@ async function exportCalendarPNG(){
 }
 function closePngModal(){
   document.getElementById('pngModal').style.display = 'none';
+}
+function saveCalendarPNG(){
+  if(!lastCalendarPNG) return;
+  const a = document.createElement('a');
+  a.href = lastCalendarPNG.dataUrl;
+  a.download = lastCalendarPNG.filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function bulletize(text){
