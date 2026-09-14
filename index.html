@@ -272,10 +272,10 @@
 <div id="pngModal" class="png-modal">
   <div class="png-modal-inner">
     <div class="png-modal-btns">
-      <button class="png-modal-save" onclick="saveCalendarPNG()">保存</button>
+      <button class="png-modal-save" onclick="saveCalendarPNG()">保存・共有</button>
       <button class="png-modal-close" onclick="closePngModal()">閉じる</button>
     </div>
-    <div class="png-modal-hint">「保存」で画像をダウンロード、または長押しでも保存できます</div>
+    <div class="png-modal-hint">「保存・共有」から保存、またはうまくいかない場合は画像を長押しして保存してください</div>
     <img id="pngModalImg" alt="練習日程表">
   </div>
 </div>
@@ -1406,8 +1406,20 @@ async function exportCalendarPNG(){
 function closePngModal(){
   document.getElementById('pngModal').style.display = 'none';
 }
-function saveCalendarPNG(){
+async function saveCalendarPNG(){
   if(!lastCalendarPNG) return;
+  try{
+    const res = await fetch(lastCalendarPNG.dataUrl);
+    const blob = await res.blob();
+    const file = new File([blob], lastCalendarPNG.filename, { type: 'image/png' });
+    if(navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({ files: [file], title: lastCalendarPNG.filename });
+      return;
+    }
+  }catch(e){
+    console.error(e);
+  }
+  // fallback: standard download link (works in regular browsers, may not work inside LINE's in-app browser)
   const a = document.createElement('a');
   a.href = lastCalendarPNG.dataUrl;
   a.download = lastCalendarPNG.filename;
