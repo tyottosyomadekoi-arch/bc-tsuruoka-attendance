@@ -31,9 +31,25 @@
   button, .chip, .cal-day, .link-btn, .remove-child{touch-action:manipulation;}
   body{margin:0;font-family:Arial,"Hiragino Kaku Gothic ProN","Meiryo",sans-serif;background:var(--light-blue);color:var(--text);min-height:100vh;}
   .header{background:var(--navy);color:#fff;padding:20px 20px 24px;position:relative;overflow:hidden;}
-  .header h1{margin:0;font-size:18px;font-weight:700;}
+  .header h1{margin:0;font-size:18px;font-weight:700;padding-right:78px;}
   .header p{margin:6px 0 0;font-size:12px;opacity:0.85;}
   .shuttle{position:absolute;right:-10px;top:-14px;width:70px;height:70px;opacity:0.18;}
+  .export-png-btn{
+    position:absolute;top:12px;right:12px;z-index:2;max-width:72px;white-space:normal;line-height:1.3;
+    background:rgba(255,255,255,0.18);color:#fff;border:1.5px solid rgba(255,255,255,0.6);
+    border-radius:8px;padding:5px 8px;font-size:10.5px;font-weight:700;cursor:pointer;touch-action:manipulation;
+  }
+  .png-modal{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
+    align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 10px;
+  }
+  .png-modal-inner{background:#fff;border-radius:12px;padding:12px;max-width:100%;text-align:center;}
+  .png-modal-close{
+    display:block;margin:0 auto 8px;background:var(--navy);color:#fff;border:none;
+    border-radius:8px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;
+  }
+  .png-modal-hint{font-size:11.5px;color:var(--muted);margin-bottom:8px;}
+  .png-modal-inner img{max-width:100%;height:auto;border-radius:6px;border:1px solid var(--border);}
   .wrap{max-width:520px;margin:-14px auto 0;padding:0 14px 40px;}
   .card{background:#fff;border-radius:14px;border:1px solid var(--border);box-shadow:0 2px 10px rgba(31,92,153,0.08);padding:16px;margin-bottom:14px;}
   .card h2{font-size:13px;color:var(--navy);margin:0 0 12px;font-weight:700;display:flex;align-items:center;gap:6px;}
@@ -53,6 +69,8 @@
     border:1.5px solid var(--border);border-radius:8px;font-size:12.5px;color:var(--muted);cursor:pointer;background:#fff;
   }
   .cal-day.blank{border:none;cursor:default;}
+  .cal-day.day-mon, .cal-day.day-wed, .cal-day.day-thu, .cal-day.day-fri{color:var(--muted);}
+  .cal-day.day-tue{color:#E8871E;font-weight:700;}
   .cal-day.day-sat{color:#1F5C99;font-weight:700;}
   .cal-day.day-sun, .cal-day.day-holiday{color:#C0392B;font-weight:700;}
   .cal-day.active{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:700;}
@@ -61,8 +79,11 @@
 
   .detail-row{border:1.5px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;}
   .detail-row .detail-date{font-size:13px;font-weight:700;margin-bottom:8px;}
+  .detail-row.day-mon, .detail-row.day-wed, .detail-row.day-thu, .detail-row.day-fri{border-left:4px solid var(--border);}
+  .detail-row.day-tue{border-left:4px solid #E8871E;}
   .detail-row.day-sat{border-left:4px solid #1F5C99;}
   .detail-row.day-sun, .detail-row.day-holiday{border-left:4px solid #C0392B;}
+  .detail-row.day-tue .detail-date{color:#E8871E;}
   .detail-row.day-sat .detail-date{color:#1F5C99;}
   .detail-row.day-sun .detail-date, .detail-row.day-holiday .detail-date{color:#C0392B;}
   .loc-radios{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
@@ -71,13 +92,15 @@
     cursor:pointer;color:var(--muted);background:#fff;touch-action:manipulation;
   }
   .loc-radio.on{border-color:var(--navy);background:var(--light-blue);color:var(--navy);}
-  .loc-radio.on[data-loc="六コミ"], .loc-badge[data-loc="六コミ"]{border-color:#1F5C99;background:#E8F1FA;color:#1F5C99;}
-  .loc-radio.on[data-loc="武道館"], .loc-badge[data-loc="武道館"]{border-color:#6B5B95;background:#EFECF7;color:#6B5B95;}
-  .loc-radio.on[data-loc="宝田"], .loc-badge[data-loc="宝田"]{border-color:#2E8B8B;background:#E6F5F5;color:#2E8B8B;}
-  .loc-radio.on[data-loc="櫛スポ"], .loc-badge[data-loc="櫛スポ"]{border-color:#C0682B;background:#FBEEE4;color:#C0682B;}
-  .loc-radio.on[data-loc="羽黒体"], .loc-badge[data-loc="羽黒体"]{border-color:#2E8B57;background:#E9F6EF;color:#2E8B57;}
-  .loc-radio.on[data-loc="藤島体"], .loc-badge[data-loc="藤島体"]{border-color:#B0417A;background:#FAE9F1;color:#B0417A;}
-  .loc-radio.on[data-loc="その他"], .loc-badge[data-loc="その他"]{border-color:#8B5A3C;background:#F3E9DE;color:#8B5A3C;}
+  .loc-radio.on[data-loc="六コミ"], .loc-badge[data-loc="六コミ"]{border-color:#2563EB;background:#EAF0FE;color:#2563EB;}
+  .loc-radio.on[data-loc="武道館"], .loc-badge[data-loc="武道館"]{border-color:#7C3AED;background:#F1EAFC;color:#7C3AED;}
+  .loc-radio.on[data-loc="宝田"], .loc-badge[data-loc="宝田"]{border-color:#0D9488;background:#E3F5F3;color:#0D9488;}
+  .loc-radio.on[data-loc="櫛スポ"], .loc-badge[data-loc="櫛スポ"]{border-color:#EA580C;background:#FDEEE4;color:#EA580C;}
+  .loc-radio.on[data-loc="羽黒体"], .loc-badge[data-loc="羽黒体"]{border-color:#16A34A;background:#E7F7ED;color:#16A34A;}
+  .loc-radio.on[data-loc="藤島体"], .loc-badge[data-loc="藤島体"]{border-color:#DB2777;background:#FCE9F1;color:#DB2777;}
+  .loc-radio.on[data-loc="小真木原ア"], .loc-badge[data-loc="小真木原ア"]{border-color:#4F46E5;background:#EBEAFC;color:#4F46E5;}
+  .loc-radio.on[data-loc="多目的"], .loc-badge[data-loc="多目的"]{border-color:#B45309;background:#FBF0E4;color:#B45309;}
+  .loc-radio.on[data-loc="カスタム"], .loc-badge[data-loc="カスタム"]{border-color:#57534E;background:#F0EFED;color:#57534E;}
   .loc-badge{display:inline-block;border:1.5px solid var(--border);border-radius:10px;padding:1px 9px;font-size:11px;font-weight:700;margin-right:6px;}
   .detail-row input[type=time]{width:120px;margin-bottom:8px;}
   .time-range{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
@@ -97,8 +120,60 @@
   }
   .duty-line{
     background:#EFECF5;border-left:3px solid var(--other);border-radius:6px;
-    padding:6px 10px;font-size:12.5px;font-weight:600;color:var(--text);margin:0 0 8px;
+    padding:6px 10px;font-size:12.5px;font-weight:600;color:var(--text);margin:8px 0 0;
   }
+
+  .slot-card{border:1.5px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px;background:#fff;}
+  .slot-card.slot-color-0{border-left:4px solid var(--navy);}
+  .slot-card.slot-color-1{border-left:4px solid #C0682B;}
+  .slot-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .slot-title{font-size:12.5px;font-weight:700;color:var(--navy);}
+  .slot-color-1 .slot-title{color:#C0682B;}
+  .remove-slot-btn{background:none;border:none;color:var(--early);font-size:11.5px;cursor:pointer;touch-action:manipulation;}
+  .add-slot-btn{
+    width:100%;border:1.5px dashed var(--border);background:#fff;color:var(--navy);
+    padding:8px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;margin-bottom:8px;touch-action:manipulation;
+  }
+  .cat-chips, .coach-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .cat-chip, .coach-chip{
+    border:1.5px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11.5px;font-weight:700;
+    cursor:pointer;color:var(--muted);background:#fff;touch-action:manipulation;
+  }
+  .cat-chip.on[data-cat="1班"], .cat-badge[data-cat="1班"]{border-color:#2563EB;background:#EAF0FE;color:#2563EB;}
+  .cat-chip.on[data-cat="2班"], .cat-badge[data-cat="2班"]{border-color:#7C3AED;background:#F1EAFC;color:#7C3AED;}
+  .cat-chip.on[data-cat="3班"], .cat-badge[data-cat="3班"]{border-color:#0D9488;background:#E3F5F3;color:#0D9488;}
+  .cat-chip.on[data-cat="全員"], .cat-badge[data-cat="全員"]{border-color:#16A34A;background:#E7F7ED;color:#16A34A;}
+  .cat-chip.on[data-cat="カスタム"], .cat-badge[data-cat="カスタム"]{border-color:#57534E;background:#F0EFED;color:#57534E;}
+  .coach-chip.on[data-coach="監督"], .coach-badge[data-coach="監督"]{border-color:#2563EB;background:#EAF0FE;color:#2563EB;}
+  .coach-chip.on[data-coach="武田"], .coach-badge[data-coach="武田"]{border-color:#7C3AED;background:#F1EAFC;color:#7C3AED;}
+  .coach-chip.on[data-coach="大川"], .coach-badge[data-coach="大川"]{border-color:#0D9488;background:#E3F5F3;color:#0D9488;}
+  .coach-chip.on[data-coach="工藤"], .coach-badge[data-coach="工藤"]{border-color:#EA580C;background:#FDEEE4;color:#EA580C;}
+  .coach-chip.on[data-coach="志布"], .coach-badge[data-coach="志布"]{border-color:#16A34A;background:#E7F7ED;color:#16A34A;}
+  .coach-chip.on[data-coach="杉山"], .coach-badge[data-coach="杉山"]{border-color:#B45309;background:#FBF0E4;color:#B45309;}
+  .coach-chip.on[data-coach="石黒"], .coach-badge[data-coach="石黒"]{border-color:#DB2777;background:#FCE9F1;color:#DB2777;}
+  .coach-chip.on[data-coach="カスタム"], .coach-badge[data-coach="カスタム"]{border-color:#57534E;background:#F0EFED;color:#57534E;}
+  .cat-badge, .coach-badge{
+    display:inline-block;border:1.5px solid var(--border);border-radius:10px;padding:1px 8px;
+    font-size:10.5px;font-weight:700;margin-right:5px;
+  }
+  .cat-line{margin:0 0 8px;}
+  .coach-line{font-size:11.5px;color:var(--muted);margin:-2px 0 8px;}
+  .school-note-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .school-note-chip{
+    border:1.5px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11.5px;font-weight:700;
+    cursor:pointer;color:var(--muted);background:#fff;touch-action:manipulation;
+  }
+  .school-note-chip.on{border-color:#C0392B;background:#FBE9E8;color:#C0392B;}
+  .school-note-line{margin:-2px 0 8px;}
+  .school-note-badge{
+    display:inline-block;border:1.5px solid #C0392B;border-radius:10px;padding:1px 8px;
+    font-size:10.5px;font-weight:700;color:#C0392B;background:#FBE9E8;margin-right:5px;
+  }
+
+  .slot-attend-block{border:1.5px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px;}
+  .slot-attend-block.slot-color-0{border-left:4px solid var(--navy);}
+  .slot-attend-block.slot-color-1{border-left:4px solid #C0682B;}
+  .slot-attend-block .slot-title{margin-bottom:6px;}
 
   .child-block{border:1.5px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;}
   .child-block .row-between{margin-bottom:10px;}
@@ -110,8 +185,14 @@
   .date-row{border-bottom:1px solid var(--border);padding:10px 2px;}
   .date-row:last-child{border-bottom:none;}
   .date-row .date-label{font-size:15.5px;font-weight:700;margin-bottom:6px;}
+  .date-row.day-mon, .summary-date.day-mon,
+  .date-row.day-wed, .summary-date.day-wed,
+  .date-row.day-thu, .summary-date.day-thu,
+  .date-row.day-fri, .summary-date.day-fri{border-left:4px solid var(--border);padding-left:8px;}
+  .date-row.day-tue, .summary-date.day-tue{border-left:4px solid #E8871E;padding-left:8px;}
   .date-row.day-sat, .summary-date.day-sat{border-left:4px solid #1F5C99;padding-left:8px;}
   .date-row.day-sun, .summary-date.day-sun, .date-row.day-holiday, .summary-date.day-holiday{border-left:4px solid #C0392B;padding-left:8px;}
+  .date-row.day-tue .date-label, .summary-date.day-tue .d-title{color:#E8871E;}
   .date-row.day-sat .date-label, .summary-date.day-sat .d-title{color:#1F5C99;}
   .date-row.day-sun .date-label, .summary-date.day-sun .d-title,
   .date-row.day-holiday .date-label, .summary-date.day-holiday .d-title{color:#C0392B;}
@@ -123,10 +204,6 @@
   .next-badge{
     display:inline-block;background:#fff;color:var(--navy);border:1.5px solid var(--navy);
     font-size:10.5px;font-weight:700;border-radius:10px;padding:1px 9px;margin-left:8px;vertical-align:middle;
-  }
-  .answered-count{
-    font-size:13px;font-weight:700;color:var(--navy);background:var(--light-blue);
-    border-radius:8px;padding:8px 12px;margin-bottom:10px;
   }
   .chips{display:flex;gap:6px;flex-wrap:wrap;}
   .chip{
@@ -149,9 +226,15 @@
   .submit-btn{width:100%;background:var(--navy);color:#fff;border:none;padding:13px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}
   .status-msg{font-size:12.5px;text-align:center;margin-top:10px;color:var(--muted);}
 
+  .answered-count{
+    font-size:13px;font-weight:700;color:var(--navy);background:var(--light-blue);
+    border-radius:8px;padding:8px 12px;margin-bottom:10px;
+  }
   .summary-date{padding:10px 4px;border-bottom:1px solid var(--border);}
   .summary-date:last-child{border-bottom:none;}
-  .summary-date .d-title{font-size:13.5px;font-weight:700;margin-bottom:8px;}
+  .summary-date .d-title{font-size:15.5px;font-weight:700;margin-bottom:8px;}
+  .summary-date > .slot-color-0{border-left:4px solid var(--navy);padding:4px 0 8px 10px;margin-bottom:8px;}
+  .summary-date > .slot-color-1{border-left:4px solid #C0682B;padding:4px 0 8px 10px;margin-bottom:8px;}
   .status-group{margin-bottom:8px;}
   .status-group:last-child{margin-bottom:0;}
   .status-group .group-label{
@@ -176,8 +259,17 @@
     <circle cx="50" cy="20" r="12"/>
     <path d="M50 32 L30 85 M50 32 L50 88 M50 32 L70 85" stroke="#fff" stroke-width="3" fill="none"/>
   </svg>
+  <button class="export-png-btn" onclick="exportCalendarPNG()">練習日程表を表示</button>
   <h1>鶴岡六学区バドミントンスポーツ少年団 練習出欠確認</h1>
   <p id="userGreeting">LINEで読み込み中…</p>
+</div>
+
+<div id="pngModal" class="png-modal">
+  <div class="png-modal-inner">
+    <button class="png-modal-close" onclick="closePngModal()">閉じる</button>
+    <div class="png-modal-hint">画像を長押しして保存できます</div>
+    <img id="pngModalImg" alt="練習日程表">
+  </div>
 </div>
 
 <div class="wrap">
@@ -233,24 +325,13 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXe5-JcxXVErPe
 // ▲▲ ---------------------------------------------------------- ▲▲
 
 let lineDisplayName = null;
-let practiceDates = []; // array of {date, location, time, message}
-let adminSelection = new Map(); // date -> {location, time, message}
+let practiceDates = []; // array of {date, slots: [{location, customLocation, startTime, endTime, categories, coaches, message}, ...]}
+let adminSelection = new Map(); // date -> {slots: [...]}
 let childCounter = 0;
-const LOCATIONS = ['六コミ', '武道館', '宝田', '櫛スポ', '羽黒体', '藤島体', 'その他'];
-
-// 曜日ごとの標準会場・時間（0=日, 1=月, ... 6=土）。指定のない曜日はデフォルトなし。
-const WEEKDAY_DEFAULTS = {
-  0: { location: '六コミ', startTime: '09:00',  endTime: '12:45' },
-  2: { location: '六コミ', startTime: '19:00', endTime: '20:50' },
-  6: { location: '六コミ', startTime: '18:30', endTime: '20:30' }
-};
-function defaultDetailForDate(ds){
-  const weekday = new Date(ds + 'T00:00:00').getDay();
-  const wd = WEEKDAY_DEFAULTS[weekday];
-  const base = { location: '', customLocation: '', startTime: '19:00', endTime: '21:00', message: '', parentDuty: '' };
-  if(wd) return { ...base, location: wd.location || '', startTime: wd.startTime || base.startTime, endTime: wd.endTime || base.endTime };
-  return base;
-}
+const LOCATIONS = ['六コミ', '武道館', '宝田', '櫛スポ', '羽黒体', '藤島体', '小真木原ア', '多目的', 'カスタム'];
+const CATEGORIES = ['全員', 'カスタム', '1班', '2班', '3班'];
+const COACHES = ['監督', '武田', '大川', '工藤', '志布', '杉山', '石黒', 'カスタム'];
+const MAX_SLOTS = 2;
 
 async function apiGet(action, params){
   const q = new URLSearchParams({ action, ...params, _t: Date.now() }).toString();
@@ -321,14 +402,14 @@ function dayClassFor(ds){
   const holidayName = holidayNameFor(ds);
   if(holidayName) return 'day-holiday';
   const weekday = new Date(ds + 'T00:00:00').getDay();
-  if(weekday === 0) return 'day-sun';
-  if(weekday === 6) return 'day-sat';
-  return '';
+  const map = ['day-sun', 'day-mon', 'day-tue', 'day-wed', 'day-thu', 'day-fri', 'day-sat'];
+  return map[weekday];
 }
 function dateLabelWithHoliday(ds){
   const holidayName = holidayNameFor(ds);
   return `${shortLabel(ds)}${holidayName ? `<span class="holiday-name">${escapeHtml(holidayName)}</span>` : ''}`;
 }
+
 function getTodayStr(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -344,12 +425,33 @@ function dateBadgeFor(ds, todayStr, nextDate){
   return '';
 }
 
+function defaultSlot(){
+  return { location: '', customLocation: '', startTime: '19:00', endTime: '21:00', categories: ['全員'], customCategory: '', coaches: [], customCoach: '', message: '' };
+}
+
+// 曜日ごとの標準会場・時間（0=日, 1=月, ... 6=土）
+const WEEKDAY_DEFAULTS = {
+  0: { location: '六コミ', startTime: '09:00', endTime: '13:00', coaches: ['監督'] },
+  2: { location: '六コミ', startTime: '19:00', endTime: '21:00', coaches: ['監督'] },
+  6: { location: '六コミ', startTime: '18:30', endTime: '20:30', coaches: ['監督'] }
+};
+function defaultSlotForDate(ds){
+  const weekday = new Date(ds + 'T00:00:00').getDay();
+  const wd = WEEKDAY_DEFAULTS[weekday];
+  const base = defaultSlot();
+  if(wd) return { ...base, location: wd.location, startTime: wd.startTime, endTime: wd.endTime, categories: wd.categories ? [...wd.categories] : base.categories, coaches: [...(wd.coaches||[])] };
+  return base;
+}
+
 async function toggleAdmin(){
   const panel = document.getElementById('adminPanel');
   const show = panel.style.display === 'none';
   panel.style.display = show ? 'block' : 'none';
   if(show){
-    adminSelection = new Map(practiceDates.map(pd => [pd.date, { location: pd.location||'', customLocation: pd.customLocation||'', startTime: pd.startTime||'', endTime: pd.endTime||'', message: pd.message||'', parentDuty: pd.parentDuty||'' }]));
+    adminSelection = new Map(practiceDates.map(pd => [pd.date, {
+      parentDuty: pd.parentDuty || '',
+      slots: pd.slots.map(s => ({ ...s, categories: [...(s.categories||[])], coaches: [...(s.coaches||[])] }))
+    }]));
     const ym = document.getElementById('monthInput').value;
     const total = daysInMonth(ym);
     const allDatesInMonth = [];
@@ -377,7 +479,7 @@ function renderCalGrid(){
 }
 function toggleCalDay(ds){
   if(adminSelection.has(ds)) adminSelection.delete(ds);
-  else adminSelection.set(ds, defaultDetailForDate(ds));
+  else adminSelection.set(ds, { parentDuty: '', slots: [defaultSlotForDate(ds)] });
   renderCalGrid();
   renderDateDetailList();
 }
@@ -391,45 +493,137 @@ function renderDateDetailList(){
   }
   container.innerHTML = dates.map(ds => {
     const detail = adminSelection.get(ds);
-    const radios = LOCATIONS.map(loc => `
-      <div class="loc-radio ${detail.location === loc ? 'on' : ''}" data-loc="${loc}" onclick="selectLocation(this,'${ds}','${loc}')">${loc}</div>
-    `).join('');
-    const showCustom = detail.location === 'その他';
+    const slotsHtml = detail.slots.map((slot, idx) => renderSlotEditor(ds, slot, idx, detail.slots.length)).join('');
+    const addBtn = detail.slots.length < MAX_SLOTS
+      ? `<button type="button" class="add-slot-btn" onclick="addSlot('${ds}')">＋ 会場を追加（最大${MAX_SLOTS}）</button>`
+      : '';
     return `
       <div class="detail-row ${dayClassFor(ds)}" data-date="${ds}">
         <div class="detail-date">${dateLabelWithHoliday(ds)}</div>
-        <div class="loc-radios">${radios}</div>
-        <input type="text" class="loc-custom-input" style="display:${showCustom ? 'block' : 'none'};margin-bottom:8px;" value="${detail.customLocation ? escapeHtml(detail.customLocation) : ''}" placeholder="会場名を入力" oninput="updateDateDetail('${ds}','customLocation',this.value)">
-        <div class="time-range">
-          <input type="time" value="${detail.startTime || ''}" oninput="updateDateDetail('${ds}','startTime',this.value)">
-          <span class="tlabel">〜</span>
-          <input type="time" value="${detail.endTime || ''}" oninput="updateDateDetail('${ds}','endTime',this.value)">
-        </div>
-        <input type="text" value="${detail.message ? escapeHtml(detail.message) : ''}" placeholder="フリーメッセージ" oninput="updateDateDetail('${ds}','message',this.value)">
+        ${slotsHtml}
+        ${addBtn}
         <label class="field-label" style="margin-top:8px;">保護者練習当番欄</label>
-        <input type="text" value="${detail.parentDuty ? escapeHtml(detail.parentDuty) : ''}" placeholder="当番の保護者名など" oninput="updateDateDetail('${ds}','parentDuty',this.value)">
+        <input type="text" value="${detail.parentDuty ? escapeHtml(detail.parentDuty) : ''}" placeholder="当番の保護者名など" oninput="updateDateParentDuty('${ds}',this.value)">
       </div>
     `;
   }).join('');
 }
-function selectLocation(el, ds, loc){
-  const row = el.closest('.detail-row');
-  row.querySelectorAll('.loc-radio').forEach(r => r.classList.remove('on'));
-  el.classList.add('on');
+function updateDateParentDuty(ds, value){
   const detail = adminSelection.get(ds);
-  if(detail) detail.location = loc;
-  const customInput = row.querySelector('.loc-custom-input');
-  if(customInput) customInput.style.display = (loc === 'その他') ? 'block' : 'none';
+  if(detail) detail.parentDuty = value;
 }
-function updateDateDetail(ds, field, value){
+
+function renderSlotEditor(ds, slot, idx, totalSlots){
+  const radios = LOCATIONS.map(loc => `
+    <div class="loc-radio ${slot.location === loc ? 'on' : ''}" data-loc="${loc}" onclick="selectSlotLocation(this,'${ds}',${idx},'${loc}')">${loc}</div>
+  `).join('');
+  const showCustom = slot.location === 'カスタム';
+  const catChips = CATEGORIES.map(cat => `
+    <div class="cat-chip ${slot.categories.includes(cat) ? 'on' : ''}" data-cat="${cat}" onclick="toggleSlotCategory(this,'${ds}',${idx},'${cat}')">${cat}</div>
+  `).join('');
+  const showCustomCat = slot.categories.includes('カスタム');
+  const coachChips = COACHES.map(coach => `
+    <div class="coach-chip ${slot.coaches.includes(coach) ? 'on' : ''}" data-coach="${coach}" onclick="toggleSlotCoach(this,'${ds}',${idx},'${coach}')">${coach}</div>
+  `).join('');
+  const showCustomCoach = slot.coaches.includes('カスタム');
+  const removeBtn = totalSlots > 1
+    ? `<button type="button" class="remove-slot-btn" onclick="removeSlot('${ds}',${idx})">この会場を削除</button>`
+    : '';
+  return `
+    <div class="slot-card slot-color-${idx}" data-date="${ds}" data-slot-idx="${idx}">
+      <div class="slot-card-header">
+        ${totalSlots > 1 ? `<span class="slot-title">会場${idx + 1}</span>` : ''}
+        ${removeBtn}
+      </div>
+      <label class="field-label">会場</label>
+      <div class="loc-radios">${radios}</div>
+      <input type="text" class="loc-custom-input" style="display:${showCustom ? 'block' : 'none'};margin-bottom:8px;" value="${slot.customLocation ? escapeHtml(slot.customLocation) : ''}" placeholder="会場名を入力" oninput="updateSlotDetail('${ds}',${idx},'customLocation',this.value)">
+      <label class="field-label">時間</label>
+      <div class="time-range">
+        <input type="time" value="${slot.startTime || ''}" oninput="updateSlotDetail('${ds}',${idx},'startTime',this.value)">
+        <span class="tlabel">〜</span>
+        <input type="time" value="${slot.endTime || ''}" oninput="updateSlotDetail('${ds}',${idx},'endTime',this.value)">
+      </div>
+      <label class="field-label">対象区分（複数選択可）</label>
+      <div class="cat-chips">${catChips}</div>
+      <input type="text" class="cat-custom-input" style="display:${showCustomCat ? 'block' : 'none'};margin-bottom:8px;" value="${slot.customCategory ? escapeHtml(slot.customCategory) : ''}" placeholder="例）保護者対応" oninput="updateSlotDetail('${ds}',${idx},'customCategory',this.value)">
+      <label class="field-label">責任者コーチ（複数選択可）</label>
+      <div class="coach-chips">${coachChips}</div>
+      <input type="text" class="coach-custom-input" style="display:${showCustomCoach ? 'block' : 'none'};margin-bottom:8px;" value="${slot.customCoach ? escapeHtml(slot.customCoach) : ''}" placeholder="コーチ名を入力" oninput="updateSlotDetail('${ds}',${idx},'customCoach',this.value)">
+      <label class="field-label">コメント</label>
+      <input type="text" value="${slot.message ? escapeHtml(slot.message) : ''}" placeholder="フリーメッセージ" oninput="updateSlotDetail('${ds}',${idx},'message',this.value)">
+    </div>
+  `;
+}
+
+function defaultSecondSlot(){
+  return { location: '六コミ', customLocation: '', startTime: '15:30', endTime: '19:00', categories: ['全員'], customCategory: '', coaches: ['監督'], customCoach: '', message: '' };
+}
+function addSlot(ds){
   const detail = adminSelection.get(ds);
-  if(detail) detail[field] = value;
+  if(!detail || detail.slots.length >= MAX_SLOTS) return;
+  detail.slots.push(detail.slots.length === 1 ? defaultSecondSlot() : defaultSlot());
+  renderDateDetailList();
+}
+function removeSlot(ds, idx){
+  const detail = adminSelection.get(ds);
+  if(!detail) return;
+  detail.slots.splice(idx, 1);
+  renderDateDetailList();
+}
+function selectSlotLocation(el, ds, idx, loc){
+  const card = el.closest('.slot-card');
+  card.querySelectorAll('.loc-radio').forEach(r => r.classList.remove('on'));
+  el.classList.add('on');
+  const slot = adminSelection.get(ds).slots[idx];
+  if(slot) slot.location = loc;
+  const customInput = card.querySelector('.loc-custom-input');
+  if(customInput) customInput.style.display = (loc === 'カスタム') ? 'block' : 'none';
+}
+function toggleSlotCategory(el, ds, idx, cat){
+  el.classList.toggle('on');
+  const slot = adminSelection.get(ds).slots[idx];
+  if(!slot) return;
+  const on = el.classList.contains('on');
+  if(on){ if(!slot.categories.includes(cat)) slot.categories.push(cat); }
+  else{ slot.categories = slot.categories.filter(c => c !== cat); }
+  if(cat === 'カスタム'){
+    const card = el.closest('.slot-card');
+    const customInput = card.querySelector('.cat-custom-input');
+    if(customInput) customInput.style.display = on ? 'block' : 'none';
+  }
+}
+function toggleSlotCoach(el, ds, idx, coach){
+  el.classList.toggle('on');
+  const slot = adminSelection.get(ds).slots[idx];
+  if(!slot) return;
+  const on = el.classList.contains('on');
+  if(on){ if(!slot.coaches.includes(coach)) slot.coaches.push(coach); }
+  else{ slot.coaches = slot.coaches.filter(c => c !== coach); }
+  if(coach === 'カスタム'){
+    const card = el.closest('.slot-card');
+    const customInput = card.querySelector('.coach-custom-input');
+    if(customInput) customInput.style.display = on ? 'block' : 'none';
+  }
+}
+function updateSlotDetail(ds, idx, field, value){
+  const slot = adminSelection.get(ds).slots[idx];
+  if(slot) slot[field] = value;
 }
 
 async function savePracticeDates(){
   const ym = document.getElementById('monthInput').value;
   const arr = Array.from(adminSelection.entries())
-    .map(([date, d]) => ({ date, location: d.location || '', customLocation: d.customLocation || '', startTime: d.startTime || '', endTime: d.endTime || '', message: d.message || '', parentDuty: d.parentDuty || '' }))
+    .map(([date, d]) => ({
+      date,
+      parentDuty: d.parentDuty || '',
+      slots: d.slots.map(s => ({
+        location: s.location || '', customLocation: s.customLocation || '',
+        startTime: s.startTime || '', endTime: s.endTime || '',
+        categories: s.categories || [], customCategory: s.customCategory || '', coaches: s.coaches || [], customCoach: s.customCoach || '',
+        message: s.message || ''
+      }))
+    }))
     .sort((a,b) => a.date.localeCompare(b.date));
   if(arr.length === 0){
     alert('練習日が1つも選ばれていません。カレンダーの日付をタップしてから保存してください。');
@@ -474,14 +668,23 @@ async function clearAllPracticeDates(){
   }
 }
 
+function normalizeSlot(s){
+  return {
+    location: s.location || '', customLocation: s.customLocation || '',
+    startTime: s.startTime || (s.time || ''), endTime: s.endTime || '',
+    categories: Array.isArray(s.categories) ? s.categories : [],
+    customCategory: s.customCategory || '',
+    coaches: Array.isArray(s.coaches) ? s.coaches : [],
+    customCoach: s.customCoach || '',
+    message: s.message || ''
+  };
+}
 function normalizePracticeDates(raw){
   return (raw || []).map(item => {
-    if(typeof item === 'string') return { date: item, location: '', customLocation: '', startTime: '', endTime: '', message: '', parentDuty: '' };
-    // migrate legacy single "time" field into startTime
-    if(item.time && !item.startTime && !item.endTime){
-      return { date: item.date, location: item.location||'', customLocation: item.customLocation||'', startTime: item.time, endTime: '', message: item.message||'', parentDuty: item.parentDuty||'' };
-    }
-    return { date: item.date, location: item.location||'', customLocation: item.customLocation||'', startTime: item.startTime||'', endTime: item.endTime||'', message: item.message||'', parentDuty: item.parentDuty||'' };
+    if(typeof item === 'string') return { date: item, parentDuty: '', slots: [defaultSlot()] };
+    if(Array.isArray(item.slots)) return { date: item.date, parentDuty: item.parentDuty || '', slots: item.slots.map(normalizeSlot) };
+    // legacy flat structure (no slots array) -> wrap as a single slot
+    return { date: item.date, parentDuty: item.parentDuty || '', slots: [normalizeSlot(item)] };
   });
 }
 
@@ -544,7 +747,7 @@ async function clearChildAttendance(id){
       alert('削除に失敗しました。もう一度お試しください。');
       return;
     }
-    renderDatesForChild(block);
+    renderDatesForChild(block); // rebuild with all chips cleared
     alert('この月の回答を削除しました。');
     loadSummary();
   }catch(e){
@@ -569,13 +772,18 @@ async function loadAndApplyExisting(block){
     }
     block.querySelectorAll('.date-row').forEach(row => {
       const ds = row.dataset.date;
-      const d = existing.days[ds];
-      if(!d || !d.status) return;
-      const chip = row.querySelector(`.chip[data-type="${d.status}"]`);
-      if(chip && !chip.classList.contains('on')) selectChip(chip);
-      if(d.status === 'late' && d.time){ const t = row.querySelector('.lateTime'); if(t) t.value = d.time; }
-      if(d.status === 'early' && d.time){ const t = row.querySelector('.earlyTime'); if(t) t.value = d.time; }
-      if(d.status === 'other' && d.message){ const m = row.querySelector('.otherMessage'); if(m) m.value = d.message; }
+      const dayData = existing.days[ds];
+      if(!dayData) return;
+      row.querySelectorAll('.slot-attend-block').forEach(sb => {
+        const idx = sb.dataset.slotIdx;
+        const d = dayData['slot' + idx];
+        if(!d || !d.status) return;
+        const chip = sb.querySelector(`.chip[data-type="${d.status}"]`);
+        if(chip && !chip.classList.contains('on')) selectChip(chip);
+        if(d.status === 'late' && d.time){ const t = sb.querySelector('.lateTime'); if(t) t.value = d.time; }
+        if(d.status === 'early' && d.time){ const t = sb.querySelector('.earlyTime'); if(t) t.value = d.time; }
+        if(d.status === 'other' && d.message){ const m = sb.querySelector('.otherMessage'); if(m) m.value = d.message; }
+      });
     });
     if(note) note.textContent = '前回の回答を読み込みました。変更したい日だけ直して送信してください。';
   }catch(e){
@@ -617,42 +825,45 @@ async function loadAllChildrenForSubmitter(){
     names.forEach(n => addChild(n));
   }
 }
-function locationBadge(pd){
-  if(!pd || !pd.location) return '';
-  const label = (pd.location === 'その他' && pd.customLocation) ? pd.customLocation : pd.location;
-  return `<span class="loc-badge" data-loc="${escapeHtml(pd.location)}">${escapeHtml(label)}</span>`;
+function locationBadge(slot){
+  if(!slot || !slot.location) return '';
+  const label = (slot.location === 'カスタム' && slot.customLocation) ? slot.customLocation : slot.location;
+  return `<span class="loc-badge" data-loc="${escapeHtml(slot.location)}">${escapeHtml(label)}</span>`;
 }
-
-function formatTimeRange(pd){
-  if(pd.startTime && pd.endTime) return `${pd.startTime}〜${pd.endTime}`;
-  if(pd.startTime) return `${pd.startTime}〜`;
-  if(pd.endTime) return `〜${pd.endTime}`;
+function categoryBadges(slot){
+  if(!slot.categories || slot.categories.length === 0) return '';
+  const badges = slot.categories.map(c => {
+    const label = (c === 'カスタム' && slot.customCategory) ? slot.customCategory : c;
+    return `<span class="cat-badge" data-cat="${escapeHtml(c)}">${escapeHtml(label)}</span>`;
+  }).join('');
+  return `<div class="cat-line">${badges}</div>`;
+}
+function coachLine(slot){
+  if(!slot.coaches || slot.coaches.length === 0) return '';
+  const badges = slot.coaches.map(c => {
+    const label = (c === 'カスタム' && slot.customCoach) ? slot.customCoach : c;
+    return `<span class="coach-badge" data-coach="${escapeHtml(c)}">${escapeHtml(label)}</span>`;
+  }).join('');
+  return `<div class="coach-line">責任者: ${badges}</div>`;
+}
+function formatTimeRange(slot){
+  if(slot.startTime && slot.endTime) return `${slot.startTime}〜${slot.endTime}`;
+  if(slot.startTime) return `${slot.startTime}〜`;
+  if(slot.endTime) return `〜${slot.endTime}`;
   return '';
 }
 
-function renderDatesForChild(block){
-  const list = block.querySelector('.datesList');
-  const todayStr = getTodayStr();
-  const upcomingDates = practiceDates.filter(pd => pd.date >= todayStr);
-  if(practiceDates.length === 0){
-    list.innerHTML = `<div class="empty">この月の練習日がまだ設定されていません</div>`;
-    return;
-  }
-  if(upcomingDates.length === 0){
-    list.innerHTML = `<div class="empty">今月の残りの練習日はありません</div>`;
-    return;
-  }
-  const nextDate = computeNextPracticeDate(practiceDates.map(pd => pd.date));
-  list.innerHTML = upcomingDates.map(pd => {
-    const ds = pd.date;
-    const timeRange = formatTimeRange(pd);
-    const metaLine = (pd.location || timeRange) ? `<div class="date-meta">${locationBadge(pd)}${timeRange ? escapeHtml(timeRange) : ''}</div>` : '';
-    const msgLine = pd.message ? `<div class="date-note">🏸 ${escapeHtml(pd.message)}</div>` : '';
-    const dutyLine = pd.parentDuty ? `<div class="duty-line">👪 当番: ${escapeHtml(pd.parentDuty)}</div>` : '';
-    return `
-    <div class="date-row ${dayClassFor(ds)}" data-date="${ds}" data-start="${pd.startTime || ''}" data-end="${pd.endTime || ''}">
-      <div class="date-label">${dateLabelWithHoliday(ds)}${dateBadgeFor(ds, todayStr, nextDate)}</div>
-      ${metaLine}${msgLine}${dutyLine}
+function renderSlotAttendBlock(slot, idx, totalSlots){
+  const timeRange = formatTimeRange(slot);
+  const metaLine = (slot.location || timeRange) ? `<div class="date-meta">${locationBadge(slot)}${timeRange ? escapeHtml(timeRange) : ''}</div>` : '';
+  const catLine = categoryBadges(slot);
+  const coachLn = coachLine(slot);
+  const msgLine = slot.message ? `<div class="date-note">🏸 ${escapeHtml(slot.message)}</div>` : '';
+  const slotLabel = totalSlots > 1 ? `<div class="slot-title">会場${idx + 1}</div>` : '';
+  return `
+    <div class="slot-attend-block slot-color-${idx}" data-slot-idx="${idx}" data-start="${slot.startTime || ''}" data-end="${slot.endTime || ''}">
+      ${slotLabel}
+      ${metaLine}${catLine}${coachLn}${msgLine}
       <div class="chips">
         <div class="chip" data-type="attend" onclick="selectChip(this)">✓ 参加</div>
         <div class="chip" data-type="absent" onclick="selectChip(this)">✕ 欠席</div>
@@ -671,47 +882,73 @@ function renderDatesForChild(block){
       </div>
     </div>
   `;
+}
+
+function renderDatesForChild(block){
+  const list = block.querySelector('.datesList');
+  const todayStr = getTodayStr();
+  const upcomingDates = practiceDates.filter(pd => pd.date >= todayStr);
+  if(practiceDates.length === 0){
+    list.innerHTML = `<div class="empty">この月の練習日がまだ設定されていません</div>`;
+    return;
+  }
+  if(upcomingDates.length === 0){
+    list.innerHTML = `<div class="empty">今月の残りの練習日はありません</div>`;
+    return;
+  }
+  const nextDate = computeNextPracticeDate(practiceDates.map(pd => pd.date));
+  list.innerHTML = upcomingDates.map(pd => {
+    const ds = pd.date;
+    const slotsHtml = pd.slots.map((slot, idx) => renderSlotAttendBlock(slot, idx, pd.slots.length)).join('');
+    const dutyLine = pd.parentDuty ? `<div class="duty-line">👪 当番: ${escapeHtml(pd.parentDuty)}</div>` : '';
+    return `
+    <div class="date-row ${dayClassFor(ds)}" data-date="${ds}">
+      <div class="date-label">${dateLabelWithHoliday(ds)}${dateBadgeFor(ds, todayStr, nextDate)}</div>
+      ${slotsHtml}
+      ${dutyLine}
+    </div>
+  `;
   }).join('');
 }
 function addMinutesToTime(timeStr, deltaMinutes){
   if(!timeStr) return '';
   const [h, m] = timeStr.split(':').map(Number);
   let total = h * 60 + m + deltaMinutes;
-  total = ((total % 1440) + 1440) % 1440; // keep within 0-23:59
+  total = ((total % 1440) + 1440) % 1440;
   const nh = Math.floor(total / 60);
   const nm = total % 60;
   return `${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}`;
 }
 
 function selectChip(el){
-  const row = el.closest('.date-row');
+  const scope = el.closest('.slot-attend-block');
   const type = el.dataset.type;
   const wasOn = el.classList.contains('on');
 
-  // clear all chips in this row, then set only the clicked one (toggle off if tapped again)
-  row.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  row.querySelectorAll('.time-inline').forEach(t => t.classList.remove('show'));
-  row.querySelectorAll('.other-inline').forEach(t => t.classList.remove('show'));
+  // clear all chips in this slot block, then set only the clicked one (toggle off if tapped again)
+  scope.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  scope.querySelectorAll('.time-inline').forEach(t => t.classList.remove('show'));
+  scope.querySelectorAll('.other-inline').forEach(t => t.classList.remove('show'));
 
   if(!wasOn){
     el.classList.add('on');
     if(type === 'late' || type === 'early'){
-      row.querySelector(`.time-inline[data-type="${type}"]`).classList.add('show');
+      scope.querySelector(`.time-inline[data-type="${type}"]`).classList.add('show');
       if(type === 'late'){
-        const input = row.querySelector('.lateTime');
-        if(input && !input.value && row.dataset.start){
-          input.value = addMinutesToTime(row.dataset.start, 30);
+        const input = scope.querySelector('.lateTime');
+        if(input && !input.value && scope.dataset.start){
+          input.value = addMinutesToTime(scope.dataset.start, 30);
         }
       }
       if(type === 'early'){
-        const input = row.querySelector('.earlyTime');
-        if(input && !input.value && row.dataset.end){
-          input.value = addMinutesToTime(row.dataset.end, -60);
+        const input = scope.querySelector('.earlyTime');
+        if(input && !input.value && scope.dataset.end){
+          input.value = addMinutesToTime(scope.dataset.end, -60);
         }
       }
     }
     if(type === 'other'){
-      row.querySelector(`.other-inline[data-type="other"]`).classList.add('show');
+      scope.querySelector(`.other-inline[data-type="other"]`).classList.add('show');
     }
   }
 }
@@ -736,23 +973,28 @@ async function submitAll(){
       const days = {};
       block.querySelectorAll('.date-row').forEach(row => {
         const ds = row.dataset.date;
-        const activeChip = row.querySelector('.chip.on');
-        if(!activeChip) return;
-        const status = activeChip.dataset.type; // attend | absent | late | early | other
-        const entry = { status };
-        if(status === 'late'){
-          const t = row.querySelector('.lateTime');
-          entry.time = t ? t.value : null;
-        }
-        if(status === 'early'){
-          const t = row.querySelector('.earlyTime');
-          entry.time = t ? t.value : null;
-        }
-        if(status === 'other'){
-          const m = row.querySelector('.otherMessage');
-          entry.message = m ? m.value.trim() : '';
-        }
-        days[ds] = entry;
+        const dayData = {};
+        row.querySelectorAll('.slot-attend-block').forEach(sb => {
+          const idx = sb.dataset.slotIdx;
+          const activeChip = sb.querySelector('.chip.on');
+          if(!activeChip) return;
+          const status = activeChip.dataset.type; // attend | absent | late | early | other
+          const entry = { status };
+          if(status === 'late'){
+            const t = sb.querySelector('.lateTime');
+            entry.time = t ? t.value : null;
+          }
+          if(status === 'early'){
+            const t = sb.querySelector('.earlyTime');
+            entry.time = t ? t.value : null;
+          }
+          if(status === 'other'){
+            const m = sb.querySelector('.otherMessage');
+            entry.message = m ? m.value.trim() : '';
+          }
+          dayData['slot' + idx] = entry;
+        });
+        if(Object.keys(dayData).length > 0) days[ds] = dayData;
       });
       try{
         const result = await apiPost({
@@ -800,30 +1042,38 @@ async function loadSummary(){
     const nextDate = computeNextPracticeDate(practiceDates.map(pd => pd.date));
     for(const pd of practiceDates){
       const ds = pd.date;
-      const groups = { attend: [], absent: [], late: [], early: [], other: [] };
-      for(const s of submissions){
-        const d = s.days ? s.days[ds] : null;
-        if(!d || !d.status || !groups[d.status]) continue;
-        let entryText = escapeHtml(s.name);
-        if(d.status === 'late' || d.status === 'early') entryText += d.time ? `(${d.time})` : '';
-        if(d.status === 'other') entryText += d.message ? `:${escapeHtml(d.message)}` : '';
-        groups[d.status].push(entryText);
-      }
-      const totalCount = statusOrder.reduce((sum, k) => sum + groups[k].length, 0);
-      if(totalCount === 0) continue;
-      const timeRange = formatTimeRange(pd);
-      const metaLine = (pd.location || timeRange) ? `<div class="date-meta">${locationBadge(pd)}${timeRange ? escapeHtml(timeRange) : ''}</div>` : '';
-      const msgLine = pd.message ? `<div class="date-note">🏸 ${escapeHtml(pd.message)}</div>` : '';
+      const slotBlocksHtml = pd.slots.map((slot, idx) => {
+        const groups = { attend: [], absent: [], late: [], early: [], other: [] };
+        for(const s of submissions){
+          const dayData = s.days ? s.days[ds] : null;
+          const d = dayData ? dayData['slot' + idx] : null;
+          if(!d || !d.status || !groups[d.status]) continue;
+          let entryText = escapeHtml(s.name);
+          if(d.status === 'late' || d.status === 'early') entryText += d.time ? `(${d.time})` : '';
+          if(d.status === 'other') entryText += d.message ? `:${escapeHtml(d.message)}` : '';
+          groups[d.status].push(entryText);
+        }
+        const totalCount = statusOrder.reduce((sum, k) => sum + groups[k].length, 0);
+        if(totalCount === 0) return '';
+        const timeRange = formatTimeRange(slot);
+        const metaLine = (slot.location || timeRange) ? `<div class="date-meta">${locationBadge(slot)}${timeRange ? escapeHtml(timeRange) : ''}</div>` : '';
+        const catLine = categoryBadges(slot);
+        const coachLn = coachLine(slot);
+              const msgLine = slot.message ? `<div class="date-note">🏸 ${escapeHtml(slot.message)}</div>` : '';
+        const slotLabel = pd.slots.length > 1 ? `<div class="slot-title">会場${idx + 1}</div>` : '';
+        const groupsHtml = statusOrder
+          .filter(k => groups[k].length > 0)
+          .map(k => `
+            <div class="status-group">
+              <span class="group-label ${k}">${labelMap[k]}（${groups[k].length}）</span>
+              <div class="group-names">${groups[k].map(n => `<div class="name-item">${n}</div>`).join('')}</div>
+            </div>
+          `).join('');
+        return `<div class="slot-color-${idx}">${slotLabel}${metaLine}${catLine}${coachLn}${msgLine}${groupsHtml}</div>`;
+      }).join('');
+      if(!slotBlocksHtml.trim()) continue;
       const dutyLine = pd.parentDuty ? `<div class="duty-line">👪 当番: ${escapeHtml(pd.parentDuty)}</div>` : '';
-      const groupsHtml = statusOrder
-        .filter(k => groups[k].length > 0)
-        .map(k => `
-          <div class="status-group">
-            <span class="group-label ${k}">${labelMap[k]}（${groups[k].length}）</span>
-            <div class="group-names">${groups[k].map(n => `<div class="name-item">${n}</div>`).join('')}</div>
-          </div>
-        `).join('');
-      html += `<div class="summary-date ${dayClassFor(ds)}"><div class="d-title">${dateLabelWithHoliday(ds)}${dateBadgeFor(ds, todayStr, nextDate)}</div>${metaLine}${msgLine}${dutyLine}${groupsHtml}</div>`;
+      html += `<div class="summary-date ${dayClassFor(ds)}"><div class="d-title">${dateLabelWithHoliday(ds)}${dateBadgeFor(ds, todayStr, nextDate)}</div>${slotBlocksHtml}${dutyLine}</div>`;
     }
     container.innerHTML = html || '<div class="empty">まだ回答がありません</div>';
   }catch(e){
@@ -834,6 +1084,317 @@ async function loadSummary(){
 
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const LOC_COLORS_PNG = {'六コミ':'#2563EB','武道館':'#7C3AED','宝田':'#0D9488','櫛スポ':'#EA580C','羽黒体':'#16A34A','藤島体':'#DB2777','小真木原ア':'#4F46E5','多目的':'#B45309','カスタム':'#57534E'};
+const CAT_COLORS_PNG = {'1班':'#2563EB','2班':'#7C3AED','3班':'#0D9488','全員':'#16A34A','カスタム':'#57534E'};
+
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+async function exportCalendarPNG(){
+  const btn = document.querySelector('.export-png-btn');
+  const originalLabel = btn ? btn.textContent : '';
+  if(btn){ btn.textContent = '作成中…'; btn.disabled = true; }
+  try{
+    const ym = document.getElementById('monthInput').value;
+    const [yearStr, monthStr] = ym.split('-');
+    const year = parseInt(yearStr), month = parseInt(monthStr);
+    const total = daysInMonth(ym);
+    const offset = firstWeekday(ym);
+
+    await ensureHolidaysLoaded(Array.from({length: total}, (_, i) => dateStr(ym, i+1)));
+
+    let currentSummary = '', nextSummary = '';
+    try{
+      const r = await apiGet('getMonthSummary', { month: ym });
+      currentSummary = r.currentSummary || '';
+      nextSummary = r.nextSummary || '';
+    }catch(e){ console.error(e); }
+
+    const practiceByDate = {};
+    practiceDates.forEach(pd => { practiceByDate[pd.date] = pd; });
+
+    const CELL_W = 260, CELL_H = 310;
+    const GRID_LEFT = 20;
+    const TITLE_H = 100;
+    const noteBoxH = (text) => {
+      const lineCount = Math.max(1, text.split('\n').filter(l=>l.trim()).length);
+      return 46 + lineCount*26 + 10;
+    };
+    let TOP_NOTES_H = 0;
+    if(currentSummary.trim() || nextSummary.trim()){
+      const curH = currentSummary.trim() ? noteBoxH(currentSummary) : 0;
+      const nxtH = nextSummary.trim() ? noteBoxH(nextSummary) : 0;
+      TOP_NOTES_H = Math.max(curH, nxtH) + 20;
+    }
+    const BOTTOM_NOTES_H = 0;
+    const DOW_H = 60;
+    const rows = Math.ceil((offset + total) / 7);
+    const GRID_TOP = 20 + TITLE_H + TOP_NOTES_H + DOW_H + 20;
+    const W = GRID_LEFT*2 + CELL_W*7;
+    const H = GRID_TOP + CELL_H*rows + BOTTOM_NOTES_H + 24;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle = '#2E8B47';
+    ctx.lineWidth = 9;
+    ctx.strokeRect(5,5,W-10,H-10);
+
+    ctx.fillStyle = '#2E8B47';
+    ctx.fillRect(20,20,W-40,TITLE_H);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px "Noto Sans CJK JP", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${year}年${month}月　鶴六バド練習予定表`, W/2, 20+TITLE_H/2+2);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    const drawNoteBox = (x, y, boxW, title, text) => {
+      const lineCount = Math.max(1, text.split('\n').filter(l=>l.trim()).length);
+      const boxH = 46 + lineCount*26 + 10;
+      ctx.fillStyle = '#FFF3E0';
+      ctx.fillRect(x, y, boxW, boxH);
+      ctx.strokeStyle = '#E8871E';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, boxW, boxH);
+      ctx.fillStyle = '#E8871E';
+      ctx.fillRect(x, y, 7, boxH);
+      ctx.font = 'bold 24px "Noto Sans CJK JP", sans-serif';
+      ctx.fillText('📌 '+title, x+20, y+10);
+      ctx.fillStyle = '#333';
+      ctx.font = '19px "Noto Sans CJK JP", sans-serif';
+      let ty = y+46;
+      text.split('\n').map(l=>l.trim()).filter(Boolean).forEach(line => {
+        ctx.fillText('・'+line.replace(/^[・\-*]\s*/,''), x+20, ty);
+        ty += 26;
+      });
+      return boxH;
+    };
+
+    if(currentSummary.trim() || nextSummary.trim()){
+      const notesY = 20+TITLE_H+10;
+      if(currentSummary.trim() && nextSummary.trim()){
+        const halfW = (W-40-12)/2;
+        drawNoteBox(20, notesY, halfW, '今月のお知らせ', currentSummary);
+        drawNoteBox(20+halfW+12, notesY, halfW, '来月のお知らせ', nextSummary);
+      }else if(currentSummary.trim()){
+        drawNoteBox(20, notesY, W-40, '今月のお知らせ', currentSummary);
+      }else{
+        drawNoteBox(20, notesY, W-40, '来月のお知らせ', nextSummary);
+      }
+    }
+
+    const DOWN = ['日','月','火','水','木','金','土'];
+    for(let i=0;i<7;i++){
+      const x0 = GRID_LEFT + i*CELL_W;
+      const y0 = GRID_TOP - DOW_H;
+      ctx.fillStyle = '#E8871E';
+      ctx.fillRect(x0, y0, CELL_W, DOW_H);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x0,y0,CELL_W,DOW_H);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 26px "Noto Sans CJK JP", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(DOWN[i], x0+CELL_W/2, y0+16);
+      ctx.textAlign = 'left';
+    }
+
+    const badgePositions = {};
+    for(let d=1; d<=total; d++){
+      const ds = dateStr(ym, d);
+      const cellIndex = offset + d - 1;
+      const row = Math.floor(cellIndex/7);
+      const col = cellIndex%7;
+      const x0 = GRID_LEFT + col*CELL_W;
+      const y0 = GRID_TOP + row*CELL_H;
+      const pd = practiceByDate[ds];
+      const holidayName = holidayNameFor(ds);
+      const isSun = col === 0, isSat = col === 6;
+
+      ctx.fillStyle = pd ? '#FFF3A0' : '#ffffff';
+      ctx.fillRect(x0,y0,CELL_W,CELL_H);
+      ctx.strokeStyle = '#B7D9B0';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x0,y0,CELL_W,CELL_H);
+
+      ctx.font = 'bold 30px "Noto Sans CJK JP", sans-serif';
+      ctx.fillStyle = (holidayName || isSun) ? '#D0392B' : (isSat ? '#1F5C99' : '#333');
+      ctx.fillText(String(d), x0+12, y0+10);
+      if(holidayName){
+        ctx.font = '14px "Noto Sans CJK JP", sans-serif';
+        ctx.fillStyle = '#D0392B';
+        ctx.fillText(holidayName, x0+48, y0+18);
+      }
+
+      if(pd && pd.slots && pd.slots.length){
+        const single = pd.slots.length === 1;
+        const F_LOC = single ? 'bold 30px' : 'bold 19px';
+        const F_TIME = single ? '28px' : '19px';
+        const F_CAT = single ? '21px' : '15px';
+        const F_COACH = single ? '24px' : '16px';
+        const LOC_PAD_H = single ? 44 : 28;
+        const LOC_GAP = single ? 54 : 34;
+        const TIME_GAP = single ? 42 : 26;
+        const CAT_GAP = single ? 42 : 26;
+        const slotH = (CELL_H-50) / pd.slots.length;
+        pd.slots.forEach((slot, idx) => {
+          const sy = y0+46+idx*slotH;
+          let ty = sy;
+          const locColor = LOC_COLORS_PNG[slot.location] || '#888';
+          ctx.fillStyle = locColor;
+          ctx.fillRect(x0+3, sy, 7, slotH-6);
+
+          if(slot.location){
+            const label = (slot.location === 'カスタム' && slot.customLocation) ? slot.customLocation : slot.location;
+            ctx.font = `${F_LOC} "Noto Sans CJK JP", sans-serif`;
+            const tw = ctx.measureText(label).width;
+            const locBadgeW = tw+22;
+            ctx.fillStyle = locColor;
+            roundRectPath(ctx, x0+18, ty, locBadgeW, LOC_PAD_H, 13);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, x0+18+locBadgeW/2, ty+LOC_PAD_H/2+1);
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            badgePositions[ds] = badgePositions[ds] || [];
+            badgePositions[ds].push({
+              row, col, location: slot.location, customLocation: slot.customLocation || '',
+              categories: slot.categories || [], customCategory: slot.customCategory || '',
+              leftX: x0+18, rightX: x0+18+locBadgeW, midY: ty+LOC_PAD_H/2
+            });
+            ty += LOC_GAP;
+          }
+          const timeRange = formatTimeRange(slot);
+          if(timeRange){
+            ctx.font = `${F_TIME} "Noto Sans CJK JP", sans-serif`;
+            ctx.fillStyle = '#333';
+            ctx.fillText(timeRange, x0+20, ty);
+            ty += TIME_GAP;
+          }
+          if(slot.categories && slot.categories.length){
+            let cx = x0+18;
+            slot.categories.forEach(cat => {
+              const label = (cat === 'カスタム' && slot.customCategory) ? slot.customCategory : cat;
+              const color = CAT_COLORS_PNG[cat] || '#888';
+              ctx.font = `${F_CAT} "Noto Sans CJK JP", sans-serif`;
+              const tw = ctx.measureText(label).width;
+              const catBadgeW = tw+14;
+              const catBadgeH = single ? 32 : 21;
+              ctx.fillStyle = color;
+              roundRectPath(ctx, cx, ty, catBadgeW, catBadgeH, 10);
+              ctx.fill();
+              ctx.fillStyle = '#fff';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(label, cx+catBadgeW/2, ty+catBadgeH/2+1);
+              ctx.textAlign = 'left';
+              ctx.textBaseline = 'top';
+              cx += tw+18;
+            });
+            ty += CAT_GAP;
+          }
+          if(slot.coaches && slot.coaches.length){
+            const coachLabels = slot.coaches.map(c => (c === 'カスタム' && slot.customCoach) ? slot.customCoach : c);
+            ctx.font = `${F_COACH} "Noto Sans CJK JP", sans-serif`;
+            ctx.fillStyle = '#333';
+            ctx.fillText('責任者:'+coachLabels.join('・'), x0+20, ty);
+            ty += TIME_GAP;
+          }
+          if(slot.message){
+            ctx.font = `${F_COACH} "Noto Sans CJK JP", sans-serif`;
+            ctx.fillStyle = '#57534E';
+            ctx.fillText('🏸 '+slot.message, x0+20, ty);
+          }
+        });
+      }
+      if(pd && pd.parentDuty){
+        ctx.font = '15px "Noto Sans CJK JP", sans-serif';
+        ctx.fillStyle = '#8B5A3C';
+        ctx.fillText('👪 '+pd.parentDuty, x0+14, y0+CELL_H-26);
+      }
+    }
+
+    // Draw connecting arrows between consecutive days with the same venue+categories
+    const sameCatSet = (a, b) => {
+      const sa = new Set(a||[]), sb = new Set(b||[]);
+      if(sa.size !== sb.size) return false;
+      for(const x of sa) if(!sb.has(x)) return false;
+      return true;
+    };
+    for(let d=2; d<=total; d++){
+      const ds = dateStr(ym, d);
+      const dp = new Date(ds + 'T00:00:00');
+      dp.setDate(dp.getDate() - 1);
+      const prevDs = `${dp.getFullYear()}-${String(dp.getMonth()+1).padStart(2,'0')}-${String(dp.getDate()).padStart(2,'0')}`;
+      const todayBadges = badgePositions[ds] || [];
+      const prevBadges = badgePositions[prevDs] || [];
+      todayBadges.forEach(tb => {
+        const sameLocation = (pb, tb) => {
+          if(pb.location !== tb.location) return false;
+          if(pb.location === 'カスタム') return pb.customLocation === tb.customLocation;
+          return true;
+        };
+        const sameCategories = (pb, tb) => {
+          if(!sameCatSet(pb.categories, tb.categories)) return false;
+          if(tb.categories.includes('カスタム')) return pb.customCategory === tb.customCategory;
+          return true;
+        };
+        const match = prevBadges.find(pb => sameLocation(pb, tb) && sameCategories(pb, tb));
+        if(!match) return;
+        ctx.strokeStyle = '#4B5563';
+        ctx.fillStyle = '#4B5563';
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        if(match.row === tb.row){
+          // same row: straight arrow from previous badge's right edge to today's badge's left edge
+          const x1 = match.rightX, y1 = match.midY, x2 = tb.leftX - 10, y2 = tb.midY;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(x2+6, y2);
+          ctx.lineTo(x2-14, y2-11);
+          ctx.lineTo(x2-14, y2+11);
+          ctx.closePath();
+          ctx.fill();
+        }else{
+          // row wrap: small arrow icon beside today's badge as a fallback indicator
+          ctx.font = 'bold 22px "Noto Sans CJK JP", sans-serif';
+          ctx.fillText('↩', tb.rightX+6, tb.midY-11);
+        }
+      });
+    }
+
+    const dataUrl = canvas.toDataURL('image/png');
+    document.getElementById('pngModalImg').src = dataUrl;
+    document.getElementById('pngModal').style.display = 'flex';
+  }catch(e){
+    console.error(e);
+    alert('日程表の作成に失敗しました。(' + (e.message || e) + ')');
+  }finally{
+    if(btn){ btn.textContent = originalLabel; btn.disabled = false; }
+  }
+}
+function closePngModal(){
+  document.getElementById('pngModal').style.display = 'none';
 }
 
 function bulletize(text){
