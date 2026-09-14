@@ -109,6 +109,11 @@
   .loc-badge{display:inline-block;border:1.5px solid var(--border);border-radius:10px;padding:1px 9px;font-size:11px;font-weight:700;margin-right:6px;}
   .detail-row input[type=time]{width:120px;margin-bottom:8px;}
   .time-range{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+  .allday-btn{
+    border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;
+    color:var(--muted);background:#fff;cursor:pointer;touch-action:manipulation;white-space:nowrap;
+  }
+  .allday-btn.on{border-color:#16A34A;background:#E7F7ED;color:#16A34A;}
   .time-range input[type=time]{margin-bottom:0;}
   .time-range .tlabel{font-size:12px;color:var(--muted);}
   .detail-row input[type=text]{width:100%;}
@@ -148,6 +153,7 @@
   .cat-chip.on[data-cat="2班"], .cat-badge[data-cat="2班"]{border-color:#7C3AED;background:#F1EAFC;color:#7C3AED;}
   .cat-chip.on[data-cat="3班"], .cat-badge[data-cat="3班"]{border-color:#0D9488;background:#E3F5F3;color:#0D9488;}
   .cat-chip.on[data-cat="全員"], .cat-badge[data-cat="全員"]{border-color:#16A34A;background:#E7F7ED;color:#16A34A;}
+  .cat-chip.on[data-cat="選抜"], .cat-badge[data-cat="選抜"]{border-color:#EA580C;background:#FDEEE4;color:#EA580C;}
   .cat-chip.on[data-cat="カスタム"], .cat-badge[data-cat="カスタム"]{border-color:#57534E;background:#F0EFED;color:#57534E;}
   .coach-chip.on[data-coach="監督"], .coach-badge[data-coach="監督"]{border-color:#2563EB;background:#EAF0FE;color:#2563EB;}
   .coach-chip.on[data-coach="武田"], .coach-badge[data-coach="武田"]{border-color:#7C3AED;background:#F1EAFC;color:#7C3AED;}
@@ -338,7 +344,7 @@ let adminSelection = new Map(); // date -> {slots: [...]}
 let lastCalendarPNG = null; // { dataUrl, filename } of the most recently generated schedule image
 let childCounter = 0;
 const LOCATIONS = ['六コミ', '武道館', '宝田', '櫛スポ', '羽黒体', '藤島体', '小真木原ア', '多目的', 'カスタム'];
-const CATEGORIES = ['全員', 'カスタム', '1班', '2班', '3班'];
+const CATEGORIES = ['全員', '選抜', 'カスタム', '1班', '2班', '3班'];
 const COACHES = ['監督', '武田', '大川', '工藤', '志布', '杉山', '石黒', 'カスタム'];
 const MAX_SLOTS = 2;
 
@@ -435,7 +441,7 @@ function dateBadgeFor(ds, todayStr, nextDate){
 }
 
 function defaultSlot(){
-  return { location: '', customLocation: '', startTime: '19:00', endTime: '21:00', categories: ['全員'], customCategory: '', coaches: [], customCoach: '', message: '' };
+  return { location: '', customLocation: '', startTime: '19:00', endTime: '21:00', allDay: false, categories: ['全員'], customCategory: '', coaches: [], customCoach: '', message: '' };
 }
 
 // 曜日ごとの標準会場・時間（0=日, 1=月, ... 6=土）
@@ -549,9 +555,10 @@ function renderSlotEditor(ds, slot, idx, totalSlots){
       <input type="text" class="loc-custom-input" style="display:${showCustom ? 'block' : 'none'};margin-bottom:8px;" value="${slot.customLocation ? escapeHtml(slot.customLocation) : ''}" placeholder="会場名を入力" oninput="updateSlotDetail('${ds}',${idx},'customLocation',this.value)">
       <label class="field-label">時間</label>
       <div class="time-range">
-        <input type="time" value="${slot.startTime || ''}" oninput="updateSlotDetail('${ds}',${idx},'startTime',this.value)">
+        <input type="time" value="${slot.startTime || ''}" ${slot.allDay ? 'disabled' : ''} oninput="updateSlotDetail('${ds}',${idx},'startTime',this.value)">
         <span class="tlabel">〜</span>
-        <input type="time" value="${slot.endTime || ''}" oninput="updateSlotDetail('${ds}',${idx},'endTime',this.value)">
+        <input type="time" value="${slot.endTime || ''}" ${slot.allDay ? 'disabled' : ''} oninput="updateSlotDetail('${ds}',${idx},'endTime',this.value)">
+        <button type="button" class="allday-btn ${slot.allDay ? 'on' : ''}" onclick="toggleSlotAllDay(this,'${ds}',${idx})">終日</button>
       </div>
       <label class="field-label">対象区分（複数選択可）</label>
       <div class="cat-chips">${catChips}</div>
@@ -566,7 +573,7 @@ function renderSlotEditor(ds, slot, idx, totalSlots){
 }
 
 function defaultSecondSlot(){
-  return { location: '六コミ', customLocation: '', startTime: '15:30', endTime: '19:00', categories: ['全員'], customCategory: '', coaches: ['監督'], customCoach: '', message: '' };
+  return { location: '六コミ', customLocation: '', startTime: '15:30', endTime: '19:00', allDay: false, categories: ['全員'], customCategory: '', coaches: ['監督'], customCoach: '', message: '' };
 }
 function addSlot(ds){
   const detail = adminSelection.get(ds);
@@ -588,6 +595,12 @@ function selectSlotLocation(el, ds, idx, loc){
   if(slot) slot.location = loc;
   const customInput = card.querySelector('.loc-custom-input');
   if(customInput) customInput.style.display = (loc === 'カスタム') ? 'block' : 'none';
+}
+function toggleSlotAllDay(el, ds, idx){
+  const slot = adminSelection.get(ds).slots[idx];
+  if(!slot) return;
+  slot.allDay = !slot.allDay;
+  renderDateDetailList();
 }
 function toggleSlotCategory(el, ds, idx, cat){
   el.classList.toggle('on');
@@ -628,7 +641,7 @@ async function savePracticeDates(){
       parentDuty: d.parentDuty || '',
       slots: d.slots.map(s => ({
         location: s.location || '', customLocation: s.customLocation || '',
-        startTime: s.startTime || '', endTime: s.endTime || '',
+        startTime: s.startTime || '', endTime: s.endTime || '', allDay: !!s.allDay,
         categories: s.categories || [], customCategory: s.customCategory || '', coaches: s.coaches || [], customCoach: s.customCoach || '',
         message: s.message || ''
       }))
@@ -681,6 +694,7 @@ function normalizeSlot(s){
   return {
     location: s.location || '', customLocation: s.customLocation || '',
     startTime: s.startTime || (s.time || ''), endTime: s.endTime || '',
+    allDay: !!s.allDay,
     categories: Array.isArray(s.categories) ? s.categories : [],
     customCategory: s.customCategory || '',
     coaches: Array.isArray(s.coaches) ? s.coaches : [],
@@ -856,6 +870,7 @@ function coachLine(slot){
   return `<div class="coach-line">責任者: ${badges}</div>`;
 }
 function formatTimeRange(slot){
+  if(slot.allDay) return '終日';
   if(slot.startTime && slot.endTime) return `${slot.startTime}〜${slot.endTime}`;
   if(slot.startTime) return `${slot.startTime}〜`;
   if(slot.endTime) return `〜${slot.endTime}`;
@@ -1096,7 +1111,7 @@ function escapeHtml(s){
 }
 
 const LOC_COLORS_PNG = {'六コミ':'#2563EB','武道館':'#7C3AED','宝田':'#0D9488','櫛スポ':'#EA580C','羽黒体':'#16A34A','藤島体':'#DB2777','小真木原ア':'#4F46E5','多目的':'#B45309','カスタム':'#57534E'};
-const CAT_COLORS_PNG = {'1班':'#2563EB','2班':'#7C3AED','3班':'#0D9488','全員':'#16A34A','カスタム':'#57534E'};
+const CAT_COLORS_PNG = {'1班':'#2563EB','2班':'#7C3AED','3班':'#0D9488','全員':'#16A34A','選抜':'#EA580C','カスタム':'#57534E'};
 
 function roundRectPath(ctx,x,y,w,h,r){
   ctx.beginPath();
